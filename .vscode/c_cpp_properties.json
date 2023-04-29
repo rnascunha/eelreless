@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/components/**",
+                "/home/rnascunha/dev/toolchain/esp-idf/esp-idf/components/**"
+            ],
+            "defines": [],
+            "compilerPath": "/home/rnascunha/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-cc",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-clang-x64",
+            "forcedInclude": [
+                "${workspaceFolder}/build/config/sdkconfig.h"
+            ]
+        }
+    ],
+    "version": 4
+}
