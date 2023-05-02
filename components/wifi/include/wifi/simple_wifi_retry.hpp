@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#ifndef WIFI_SIMPLE_RETRY_HANDLER_HPP_
-#define WIFI_SIMPLE_RETRY_HANDLER_HPP_
+#ifndef COMPONENTS_WIFI_SIMPLE_RETRY_HANDLER_HPP_
+#define COMPONENTS_WIFI_SIMPLE_RETRY_HANDLER_HPP_
 
 #include <limits>
 
@@ -20,13 +20,15 @@
 namespace wifi {
 namespace station {
 
+struct not_register{};
+
 class simple_wifi_retry {
  public:
   static constexpr const unsigned connected = BIT0;
   static constexpr const unsigned fail = BIT1;
 
-  simple_wifi_retry(int max_retry = std::numeric_limits<int>::max())
-    : max_retry_(max_retry) {}
+  simple_wifi_retry(int max_retry = std::numeric_limits<int>::max()) noexcept;
+  simple_wifi_retry(not_register, int max_retry = std::numeric_limits<int>::max()) noexcept;
 
   EventBits_t wait(TickType_t wait_time = portMAX_DELAY) noexcept;
 
@@ -37,6 +39,10 @@ class simple_wifi_retry {
 
   int retry() const noexcept { return retry_; }
   int max_retry() const noexcept { return max_retry_; }
+  void reset() noexcept;
+
+  bool is_connected() const noexcept;
+  bool failed() const noexcept;
 
  private:
   void wifi_handler(void* arg,
@@ -46,7 +52,7 @@ class simple_wifi_retry {
             int32_t event_id,
             void* event_data) noexcept;
 
-  EventGroupHandle_t wifi_event_group = xEventGroupCreate();
+  EventGroupHandle_t event_ = xEventGroupCreate();
   int max_retry_;
   int retry_ = 0;
 };
@@ -56,4 +62,4 @@ void register_handler(simple_wifi_retry& instance) noexcept;
 }  // namespace station 
 }  // namespace wifi
 
-#endif  // WIFI_SIMPLE_RETRY_HANDLER_HPP_
+#endif //  COMPONENTS_WIFI_SIMPLE_RETRY_HANDLER_HPP_

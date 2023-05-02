@@ -1,11 +1,28 @@
+/**
+ * @file main.cpp
+ * @author Rafael Cunha (rnascunha@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-05-01
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include <cstring>
+#include <unistd.h>
 
-#include "nvs_flash.h"
 #include "esp_wifi.h"
 #include "esp_log.h"
+#include "esp_http_server.h"
+
+#include "sys/sys.hpp"
 
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
+
+#include "http/simple_server_connect.hpp"
+
+#include "resources.cpp"
 
 #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
 #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
@@ -39,24 +56,15 @@
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WAPI_PSK
 #endif
 
-static constexpr const char *TAG = "wifi station";
+static constexpr const
+char *TAG = "HTTP Server";
 
 extern "C" void app_main() {
   /**
    * Chip Modules initialization
    */
-  //Initialize NVS
-  esp_err_t ret = nvs_flash_init();
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    ret = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK(ret);
-
-  ESP_ERROR_CHECK(esp_netif_init());
-  ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-
+  sys::default_net_init();
+  
   /**
    * WiFi configuration/connection
    */
@@ -69,32 +77,48 @@ extern "C" void app_main() {
 
   auto* net_handler = wifi::station::config(config);
   if (net_handler == nullptr) {
-    ESP_LOGE(TAG,  "Configure WiFi error %d", ret);
+    ESP_LOGE(TAG,  "Configure WiFi error");
     return;
   }
 
   wifi::station::simple_wifi_retry retry{EXAMPLE_ESP_MAXIMUM_RETRY};
-  wifi::station::register_handler(retry);
+  http::simple_server_connect http_server {
+    httpd_uri_t{
+      .uri       = "/echo",
+      .method    = HTTP_POST,
+      .handler   = echo_post_handler,
+      .user_ctx  = NULL
+    },
+    httpd_uri{
+      .uri       = "/hello",
+      .method    = HTTP_GET,
+      .handler   = hello_get_handler,
+      .user_ctx  = (void* )"Hello World!"
+    },
+    http::http_error{HTTPD_404_NOT_FOUND, http_404_error_handler}
+  };
+  http_server.config.server_port = 80;
   
-  ret = wifi::station::connect();
+  esp_err_t ret = wifi::station::connect();
   if (ret != ESP_OK) {
     ESP_LOGE(TAG,  "Connect WiFi error %d", ret);
     return;
   }
 
-  ESP_LOGI(TAG, "WiFi connecting!");
+  ESP_LOGI(TAG, "WiFi connecting to SSID:%s password:%s",
+                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
 
-  auto bits = retry.wait();
+  retry.wait();
 
-  if (bits & wifi::station::simple_wifi_retry::connected) {
-      ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
-                EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
-      auto ip_info = wifi::station::ip(net_handler);
-      ESP_LOGI(TAG, "IP:" IPSTR, IP2STR(&ip_info.ip));
-  } else if (bits & wifi::station::simple_wifi_retry::fail) {
-      ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
-                EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+  if (retry.is_connected()) {
+    auto ip_info = wifi::station::ip(net_handler);
+    ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
   } else {
-      ESP_LOGE(TAG, "UNEXPECTED EVENT");
+    ESP_LOGI(TAG, "Failed");
+    return;
+  }
+
+  while (true) {
+    sleep(5);
   }
 }

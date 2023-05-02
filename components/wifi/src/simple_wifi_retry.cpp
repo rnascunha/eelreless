@@ -19,9 +19,19 @@
 namespace wifi {
 namespace station {
 
+simple_wifi_retry::simple_wifi_retry(
+  int max_retry /* = std::numeric_limits<int>::max() */) noexcept
+  : max_retry_{max_retry} {
+  register_handler(*this);
+}
+
+simple_wifi_retry::simple_wifi_retry(not_register,
+                                     int max_retry /* = std::numeric_limits<int>::max() */) noexcept
+ : max_retry_{max_retry} {}
+
 EventBits_t 
 simple_wifi_retry::wait(TickType_t wait_time /* = portMAX_DELAY */) {
-  return xEventGroupWaitBits(wifi_event_group,
+  return xEventGroupWaitBits(event_,
                             connected | fail,
                             pdFALSE,
                             pdFALSE,
@@ -40,6 +50,11 @@ simple_wifi_retry::handler(void* arg,
     self->ip_handler(arg, event_id, event_data);
 }
 
+void simple_wifi_retry::reset() noexcept {
+  retry_ = 0;
+  xEventGroupClearBits(event_, connected | fail);
+}
+
 void
 simple_wifi_retry::wifi_handler(void* arg,
                                 int32_t event_id,
@@ -50,7 +65,7 @@ simple_wifi_retry::wifi_handler(void* arg,
     if (retry_++ < max_retry_)
       esp_wifi_connect();
     else
-      xEventGroupSetBits(wifi_event_group, fail);
+      xEventGroupSetBits(event_, fail);
   }
 }
 
@@ -59,7 +74,17 @@ simple_wifi_retry::ip_handler(void* arg,
                               int32_t event_id,
                               void* event_data) noexcept {
   retry_ = 0;
-  xEventGroupSetBits(wifi_event_group, connected);
+  xEventGroupSetBits(event_, connected);
+}
+
+bool
+simple_wifi_retry::is_connected() const noexcept {
+  return (connected & xEventGroupGetBits(event_)) != 0;
+}
+
+bool
+simple_wifi_retry::failed() const noexcept {
+  return (fail & xEventGroupGetBits(event_)) != 0;
 }
 
 void register_handler(simple_wifi_retry& instance) noexcept {

@@ -9,20 +9,13 @@
  * 
  */
 #include <cstring>
-#include <unistd.h>
 
 #include "esp_wifi.h"
 #include "esp_log.h"
-#include "esp_http_server.h"
 
 #include "sys/sys.hpp"
-
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
-
-#include "http/server_connect_cb.hpp"
-
-#include "resources.cpp"
 
 #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
 #define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
@@ -57,7 +50,7 @@
 #endif
 
 static constexpr const
-char *TAG = "HTTP Server";
+char *TAG = "WiFi Station";
 
 extern "C" void app_main() {
   /**
@@ -82,23 +75,6 @@ extern "C" void app_main() {
   }
 
   wifi::station::simple_wifi_retry retry{EXAMPLE_ESP_MAXIMUM_RETRY};
-  http::server_connect_cb http_server{[](http::server& server) {
-      server.register_uri(httpd_uri_t{
-        .uri       = "/echo",
-        .method    = HTTP_POST,
-        .handler   = echo_post_handler,
-        .user_ctx  = NULL
-      });
-      server.register_uri(httpd_uri{
-        .uri       = "/hello",
-        .method    = HTTP_GET,
-        .handler   = hello_get_handler,
-        .user_ctx  = (void* )"Hello World!"
-      });
-      server.register_err(http::http_error{HTTPD_404_NOT_FOUND, http_404_error_handler});
-    }
-  };
-  http_server.config.server_port = 80;
   
   esp_err_t ret = wifi::station::connect();
   if (ret != ESP_OK) {
@@ -114,12 +90,11 @@ extern "C" void app_main() {
   if (retry.is_connected()) {
     auto ip_info = wifi::station::ip(net_handler);
     ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
-  } else {
+  } else if (retry.failed()) {
     ESP_LOGI(TAG, "Failed");
     return;
-  }
-
-  while (true) {
-    sleep(5);
+  } else {
+    ESP_LOGE(TAG, "UNEXPECTED EVENT");
+    return;
   }
 }
