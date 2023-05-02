@@ -17,19 +17,19 @@
 
 namespace sys {
 
-esp_err_t default_net_init() noexcept {
+error default_net_init() noexcept {
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
     ret = nvs_flash_erase();
-    if (ret != ESP_OK)
+    if (ret)
       return ret;
     ret = nvs_flash_init();
   }
-  if (ret != ESP_OK)
+  if (ret)
     return ret;
 
   ret = esp_netif_init();
-  if (ret != ESP_OK)
+  if (ret)
     return ret;
 
   return esp_event_loop_create_default();

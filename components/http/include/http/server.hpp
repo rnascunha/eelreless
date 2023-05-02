@@ -11,52 +11,75 @@
 #ifndef COMPONENTS_HTTP_SERVER_HPP_
 #define COMPONENTS_HTTP_SERVER_HPP_
 
+#include <cstdint>
+#include <type_traits>
+#include <functional>
+
 #include "esp_http_server.h"
+
+#include "sys/error.hpp"
 
 namespace http {
 
-struct http_error {
-  httpd_err_code_t code;
-  httpd_err_handler_func_t handler;
-};
-
 class server {
  public:
+  using error_code = httpd_err_code_t;
+  using error_func = httpd_err_handler_func_t;
+
+  struct error {
+    error_code code;
+    error_func handler;
+  };
+
+  using config = httpd_config_t;
+  using handler = httpd_handle_t;
+
+  using uri = httpd_uri_t;
+  using method = httpd_method_t;
+
   server() noexcept = default;
-  server(uint16_t port) noexcept;
-  server(const httpd_config_t&) noexcept;
+  server(std::uint16_t port) noexcept;
+  server(const config&) noexcept;
 
   ~server() noexcept {
     stop();
   }
 
-  esp_err_t start(const httpd_config_t&) noexcept;
-  esp_err_t stop() noexcept;
+  sys::error start(const config&) noexcept;
+  sys::error stop() noexcept;
 
-  esp_err_t
-  register_uri(const httpd_uri_t&) noexcept;
-  esp_err_t
+  sys::error
+  register_uri(const uri&) noexcept;
+  sys::error
+  register_uri(error_code, error_func) noexcept;
+  sys::error
+  register_uri(const error& err) noexcept;
+
+  template<typename ...Uris>
+  std::enable_if_t<std::greater{}(sizeof...(Uris), 1)> 
+  register_uri(Uris&&... uris) noexcept {
+    (register_uri(uris), ...);
+  }
+
+  sys::error
   unregister_uri(const char* uri) noexcept;
-  esp_err_t
+  sys::error
   unregister_uri(const char* uri,
-                 httpd_method_t method) noexcept;
+                  method method) noexcept;
+  sys::error
+  unregister_uri(error_code) noexcept;
+  sys::error
+  unregister_uri(const error&) noexcept;
 
-  esp_err_t
-  register_err(httpd_err_code_t, httpd_err_handler_func_t) noexcept;
-  esp_err_t
-  register_err(const http_error& err) noexcept;
-  esp_err_t
-  unregister_err(httpd_err_code_t) noexcept;
-
-  bool
+  [[nodiscard]] bool
   is_connected() const noexcept {
     return handler_ != nullptr;
   }
 
-  static httpd_handle_t
-  initiate(const httpd_config_t&) noexcept;
+  [[nodiscard]] static handler
+  initiate(const config&) noexcept;
  private:
-  httpd_handle_t handler_ = nullptr;
+  handler handler_ = nullptr;
 };
 
 }  // namespace http

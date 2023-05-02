@@ -12,48 +12,61 @@
 #define COMPONENTS_SYS_STREAM_HPP_
 
 #include <cstdio>
+#include <utility>
+#include <type_traits>
+
+#include "sys/error.hpp"
 
 namespace sys {
 
-struct out_stream {
-  FILE* out;
+struct ostream {
+  FILE* stream = stdout;
 };
 
-out_stream out{stdout};
-
-out_stream&
-operator<<(out_stream& stream,
-                       const char* string) noexcept {
-  std::fputs(string, stream.out);
-  return stream;
+template<typename Stream>
+std::enable_if_t<std::is_base_of_v<ostream, Stream>, Stream&&>
+operator<<(Stream&& stream,
+           const char* string) noexcept {
+  std::fputs(string, stream.stream);
+  return std::forward<Stream>(stream);
 }
 
-out_stream&
-operator<<(out_stream& stream,
-                       int number) noexcept {
-  std::fprintf(stream.out, "%d", number);
-  return stream;
+template<typename Stream>
+std::enable_if_t<std::is_base_of_v<ostream, Stream>, Stream&&>
+operator<<(Stream&& stream,
+           int number) noexcept {
+  std::fprintf(stream.stream, "%d", number);
+  return std::forward<Stream>(stream);
 }
 
-out_stream&
-operator<<(out_stream& stream,
-                       unsigned number) noexcept {
-  std::fprintf(stream.out, "%u", number);
-  return stream;
+template<typename Stream>
+std::enable_if_t<std::is_base_of_v<ostream, Stream>, Stream&&>
+operator<<(Stream&& stream,
+           unsigned number) noexcept {
+  std::fprintf(stream.stream, "%u", number);
+  return std::forward<Stream>(stream);
 }
 
-out_stream&
-operator<<(out_stream& stream,
-                       float number) noexcept {
-  std::fprintf(stream.out, "%f", number);
-  return stream;
+template<typename Stream>
+std::enable_if_t<std::is_base_of_v<ostream, Stream>, Stream&&>
+operator<<(Stream&& stream,
+           float number) noexcept {
+  std::fprintf(stream.stream, "%f", number);
+  return std::forward<Stream>(stream);
 }
 
-out_stream&
-operator<<(out_stream& stream,
-                       double number) noexcept {
-  std::fprintf(stream.out, "%f", number);
-  return stream;
+template<typename Stream>
+std::enable_if_t<std::is_base_of_v<ostream, Stream>, Stream&&>
+operator<<(Stream&& stream,
+           double number) noexcept {
+  std::fprintf(stream.stream, "%f", number);
+  return std::forward<Stream>(stream);
+}
+
+template<typename Stream>
+std::enable_if_t<std::is_base_of_v<ostream, Stream>, Stream&&>
+operator<<(Stream&& stream, const error& err) noexcept {
+  return stream << err.value() << ":" << err.message();
 }
 
 }  // namespace sys

@@ -9,11 +9,15 @@
  * 
  */
 #include <cstring>
+#include <thread>
+#include <chrono>
 
-#include "esp_wifi.h"
 #include "esp_log.h"
 
+#include "sys/error.hpp"
 #include "sys/sys.hpp"
+#include "sys/time.hpp"
+
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
 
@@ -54,14 +58,9 @@ char *TAG = "WiFi Station";
 
 extern "C" void app_main() {
   /**
-   * Chip Modules initialization
-   */
-  sys::default_net_init();
-  
-  /**
    * WiFi configuration/connection
    */
-  wifi_config_t config = {};
+  wifi::config config = {};
   std::strcpy((char*)config.sta.ssid, EXAMPLE_ESP_WIFI_SSID);
   std::strcpy((char*)config.sta.password, EXAMPLE_ESP_WIFI_PASS);
   std::strcpy((char*)config.sta.sae_h2e_identifier, EXAMPLE_H2E_IDENTIFIER);
@@ -75,10 +74,9 @@ extern "C" void app_main() {
   }
 
   wifi::station::simple_wifi_retry retry{EXAMPLE_ESP_MAXIMUM_RETRY};
-  
-  esp_err_t ret = wifi::station::connect();
-  if (ret != ESP_OK) {
-    ESP_LOGE(TAG,  "Connect WiFi error %d", ret);
+  sys::error ret = wifi::station::connect();
+  if (ret) {
+    ESP_LOGE(TAG, "Connect WiFi error %d", ret.value());
     return;
   }
 
@@ -90,11 +88,16 @@ extern "C" void app_main() {
   if (retry.is_connected()) {
     auto ip_info = wifi::station::ip(net_handler);
     ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
-  } else if (retry.failed()) {
+  } else if (retry.failed) {
     ESP_LOGI(TAG, "Failed");
     return;
   } else {
-    ESP_LOGE(TAG, "UNEXPECTED EVENT");
+    ESP_LOGI(TAG, "Unexpected event");
     return;
+  }
+
+  using namespace std::chrono_literals;
+  while (true) {
+    std::this_thread::sleep_for(5s);
   }
 }

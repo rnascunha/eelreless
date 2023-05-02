@@ -13,9 +13,11 @@
 
 #include "esp_err.h"
 
+#include "sys/error.hpp"
+
 namespace sys {
 
-esp_err_t default_net_init() noexcept;
+error default_net_init() noexcept;
 
 }  // namespace sys
 

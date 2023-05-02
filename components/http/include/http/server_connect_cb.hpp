@@ -11,6 +11,7 @@
 #ifndef COMPONENTS_HTTP_SERVER_CONNECT_CB_HPP_
 #define COMPONENTS_HTTP_SERVER_CONNECT_CB_HPP_
 
+#include <cstdint>
 #include <type_traits>
 #include <array>
 
@@ -32,21 +33,21 @@ struct server_connect_cb {
    : call{callable} {}
 
   server svr;
-  httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+  server::config config = HTTPD_DEFAULT_CONFIG();
   StartCallable call;
 };
 
 
 static void server_disconnect(void* arg,
-                               esp_event_base_t,
-                               int32_t, void*) {
+                              esp_event_base_t,
+                              std::int32_t, void*) {
   ((server*)arg)->stop();
 }
 
 template<typename StartCallable>
 static void server_connect(void* arg,
                            esp_event_base_t,
-                           int32_t, void*){
+                           std::int32_t, void*){
   auto* ssc = (server_connect_cb<StartCallable>*)arg;
   if (ssc->svr.is_connected())
     return;

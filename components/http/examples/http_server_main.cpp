@@ -9,13 +9,14 @@
  * 
  */
 #include <cstring>
-#include <unistd.h>
+#include <thread>
+#include <chrono>
 
-#include "esp_wifi.h"
 #include "esp_log.h"
-#include "esp_http_server.h"
 
+#include "sys/error.hpp"
 #include "sys/sys.hpp"
+#include "sys/time.hpp"
 
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
@@ -61,14 +62,9 @@ char *TAG = "HTTP Server";
 
 extern "C" void app_main() {
   /**
-   * Chip Modules initialization
-   */
-  sys::default_net_init();
-  
-  /**
    * WiFi configuration/connection
    */
-  wifi_config_t config = {};
+  wifi::config config = {};
   std::strcpy((char*)config.sta.ssid, EXAMPLE_ESP_WIFI_SSID);
   std::strcpy((char*)config.sta.password, EXAMPLE_ESP_WIFI_PASS);
   std::strcpy((char*)config.sta.sae_h2e_identifier, EXAMPLE_H2E_IDENTIFIER);
@@ -82,26 +78,28 @@ extern "C" void app_main() {
   }
 
   wifi::station::simple_wifi_retry retry{EXAMPLE_ESP_MAXIMUM_RETRY};
-  http::simple_server_connect http_server {
-    httpd_uri_t{
-      .uri       = "/echo",
-      .method    = HTTP_POST,
-      .handler   = echo_post_handler,
-      .user_ctx  = NULL
-    },
-    httpd_uri{
-      .uri       = "/hello",
-      .method    = HTTP_GET,
-      .handler   = hello_get_handler,
-      .user_ctx  = (void* )"Hello World!"
-    },
-    http::http_error{HTTPD_404_NOT_FOUND, http_404_error_handler}
-  };
+  http::simple_server_connect http_server{
+      http::server::uri{
+        .uri       = "/echo",
+        .method    = HTTP_POST,
+        .handler   = echo_post_handler,
+        .user_ctx  = nullptr
+      },
+      http::server::uri{
+        .uri       = "/hello",
+        .method    = HTTP_GET,
+        .handler   = hello_get_handler,
+        .user_ctx  = (void* )"Hello World!"
+      },
+      http::server::error{
+        .code      = HTTPD_404_NOT_FOUND,
+        .handler   = http_404_error_handler
+      }};
   http_server.config.server_port = 80;
   
-  esp_err_t ret = wifi::station::connect();
-  if (ret != ESP_OK) {
-    ESP_LOGE(TAG,  "Connect WiFi error %d", ret);
+  sys::error ret = wifi::station::connect();
+  if (ret) {
+    ESP_LOGE(TAG, "Connect WiFi error %d", ret.value());
     return;
   }
 
@@ -118,7 +116,8 @@ extern "C" void app_main() {
     return;
   }
 
+  using namespace std::chrono_literals;
   while (true) {
-    sleep(5);
+    std::this_thread::sleep_for(5s);
   }
 }

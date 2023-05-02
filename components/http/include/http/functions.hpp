@@ -16,24 +16,30 @@
 
 #include "esp_http_server.h"
 
-#include "helper.hpp"
 #include "http/server.hpp"
 
 namespace http {
 
-using http_uri_err = std::variant<httpd_uri_t, http_error>;
+template<class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+// explicit deduction guide (not needed as of C++20)
+template<class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
+
+using uri_error = std::variant<server::uri, server::error>;
 
 template<unsigned int N>
 void
-register_uris(server& handler, const std::array<http_uri_err, N>& uris) noexcept {
+register_uris(server& handler, const std::array<uri_error, N>& uris) noexcept {
   for (const auto& uri : uris) {
-    std::visit(helper::overloaded{
-      [&handler](const httpd_uri_t& uri) { handler.register_uri(uri); },
-      [&handler](const http_error& err) { handler.register_err(err.code, err.handler); }
+    std::visit(overloaded{
+      // [&handler](const server::uri& uri) { handler.register_uri(uri); },
+      // [&handler](const server::error& err) { handler.register_uri(err.code, err.handler); }
+      [&handler](const auto& uuri) { handler.register_uri(uuri); }
     }, uri);
   }
 }
 
-}  // namespace
+}  // namespace http
 
 #endif  // COMPONENTS_HTTP_HELPER_HPP_

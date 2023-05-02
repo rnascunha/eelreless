@@ -15,11 +15,16 @@
 #include "esp_netif.h"
 #include "esp_wifi.h"
 
+#include "sys/error.hpp"
+
 namespace wifi {
+
+using config = wifi_config_t;
+
 namespace station {
 
-esp_netif_t* config(wifi_config_t& wifi_config) noexcept;
-esp_err_t connect() noexcept;
+esp_netif_t* config(wifi::config& wifi_config) noexcept;
+sys::error connect() noexcept;
 esp_netif_ip_info_t ip(esp_netif_t* handler) noexcept;
 
 

@@ -14,7 +14,7 @@
 namespace sys{
 namespace event {
 
-esp_err_t register_handler(esp_event_base_t base,
+sys::error register_handler(esp_event_base_t base,
               int32_t id,
               esp_event_handler_t handler,
               void* arg /* = nullptr */) noexcept {
@@ -24,7 +24,7 @@ esp_err_t register_handler(esp_event_base_t base,
                                     arg);
 }
 
-esp_err_t register_handler(esp_event_base_t base,
+sys::error register_handler(esp_event_base_t base,
               int32_t id,
               esp_event_handler_instance_t& instance,
               esp_event_handler_t handler,

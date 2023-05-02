@@ -8,11 +8,15 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <chrono>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
+
 #include "esp_wifi.h"
 
+#include "sys/time.hpp"
 #include "sys/event.hpp"
 #include "wifi/simple_wifi_retry.hpp"
 
@@ -30,7 +34,7 @@ simple_wifi_retry::simple_wifi_retry(not_register,
  : max_retry_{max_retry} {}
 
 EventBits_t 
-simple_wifi_retry::wait(TickType_t wait_time /* = portMAX_DELAY */) {
+simple_wifi_retry::wait(sys::time::ticks wait_time /* = sys::time::max */) {
   return xEventGroupWaitBits(event_,
                             connected | fail,
                             pdFALSE,
@@ -41,7 +45,7 @@ simple_wifi_retry::wait(TickType_t wait_time /* = portMAX_DELAY */) {
 void
 simple_wifi_retry::handler(void* arg,
             esp_event_base_t event_base,
-            int32_t event_id,
+            std::int32_t event_id,
             void* event_data) noexcept {
   simple_wifi_retry* self = (simple_wifi_retry*)arg;
   if (event_base == WIFI_EVENT)
@@ -57,7 +61,7 @@ void simple_wifi_retry::reset() noexcept {
 
 void
 simple_wifi_retry::wifi_handler(void* arg,
-                                int32_t event_id,
+                                std::int32_t event_id,
                                 void* event_data) noexcept {
   if (event_id == WIFI_EVENT_STA_START)
     esp_wifi_connect(); 
@@ -71,7 +75,7 @@ simple_wifi_retry::wifi_handler(void* arg,
 
 void
 simple_wifi_retry::ip_handler(void* arg,
-                              int32_t event_id,
+                              std::int32_t event_id,
                               void* event_data) noexcept {
   retry_ = 0;
   xEventGroupSetBits(event_, connected);

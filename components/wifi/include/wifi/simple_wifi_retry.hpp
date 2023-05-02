@@ -12,6 +12,9 @@
 #define COMPONENTS_WIFI_SIMPLE_RETRY_HANDLER_HPP_
 
 #include <limits>
+#include <cstdint>
+
+#include "sys/time.hpp"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -30,11 +33,18 @@ class simple_wifi_retry {
   simple_wifi_retry(int max_retry = std::numeric_limits<int>::max()) noexcept;
   simple_wifi_retry(not_register, int max_retry = std::numeric_limits<int>::max()) noexcept;
 
-  EventBits_t wait(TickType_t wait_time = portMAX_DELAY) noexcept;
+  EventBits_t
+  wait(sys::time::ticks wait_time = sys::time::max) noexcept;
+  
+  template<typename Rep, typename Ratio>
+  EventBits_t
+  wait(std::chrono::duration<Rep, Ratio> duration) noexcept {
+    return wait(sys::time::to_ticks(duration));
+  }
 
   static void handler(void* arg,
                esp_event_base_t event_base,
-               int32_t event_id,
+               std::int32_t event_id,
                void* event_data) noexcept;
 
   int retry() const noexcept { return retry_; }
@@ -46,11 +56,11 @@ class simple_wifi_retry {
 
  private:
   void wifi_handler(void* arg,
-                    int32_t event_id,
+                    std::int32_t event_id,
                     void* event_data) noexcept;
   void ip_handler(void* arg,
-            int32_t event_id,
-            void* event_data) noexcept;
+                    std::int32_t event_id,
+                    void* event_data) noexcept;
 
   EventGroupHandle_t event_ = xEventGroupCreate();
   int max_retry_;
