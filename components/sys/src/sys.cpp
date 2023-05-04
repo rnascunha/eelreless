@@ -8,10 +8,14 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <chrono>
+
 #include "esp_err.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "esp_event.h"
+
+#include "freertos/task.h"
 
 #include "sys/sys.hpp"
 
@@ -33,6 +37,10 @@ error default_net_init() noexcept {
     return ret;
 
   return esp_event_loop_create_default();
+}
+
+void delay(sys::time::ticks ticks) noexcept {
+  return vTaskDelay(ticks);
 }
 
 }  // namespace sys
