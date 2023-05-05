@@ -10,7 +10,7 @@
  */
 #include <cstring>
 #include <chrono>
-#include <inttypes.h>
+#include <thread>
 
 #include "esp_log.h"
 
@@ -18,110 +18,118 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
-#include "sys/error.hpp"
 #include "sys/sys.hpp"
-#include "sys/time.hpp"
 
-#include "adc/continuous.hpp"
+#include "wifi/station.hpp"
+#include "wifi/simple_wifi_retry.hpp"
+#include "http/server_connect_cb.hpp"
 
-#define EXAMPLE_ADC_UNIT                    ADC_UNIT_1
-#define _EXAMPLE_ADC_UNIT_STR(unit)         #unit
-#define EXAMPLE_ADC_UNIT_STR(unit)          _EXAMPLE_ADC_UNIT_STR(unit)
-#define EXAMPLE_ADC_CONV_MODE               ADC_CONV_SINGLE_UNIT_1
-#define EXAMPLE_ADC_ATTEN                   ADC_ATTEN_DB_11
-#define EXAMPLE_ADC_BIT_WIDTH               SOC_ADC_DIGI_MAX_BITWIDTH
+/// WIFI
+#define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
+#define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
+#define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
 
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
-#define EXAMPLE_ADC_OUTPUT_TYPE             ADC_DIGI_OUTPUT_FORMAT_TYPE1
-#else
-#define EXAMPLE_ADC_OUTPUT_TYPE             ADC_DIGI_OUTPUT_FORMAT_TYPE2
+#if CONFIG_ESP_WPA3_SAE_PWE_HUNT_AND_PECK
+#define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_HUNT_AND_PECK
+#define EXAMPLE_H2E_IDENTIFIER ""
+#elif CONFIG_ESP_WPA3_SAE_PWE_HASH_TO_ELEMENT
+#define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_HASH_TO_ELEMENT
+#define EXAMPLE_H2E_IDENTIFIER CONFIG_ESP_WIFI_PW_ID
+#elif CONFIG_ESP_WPA3_SAE_PWE_BOTH
+#define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_BOTH
+#define EXAMPLE_H2E_IDENTIFIER CONFIG_ESP_WIFI_PW_ID
+#endif
+#if CONFIG_ESP_WIFI_AUTH_OPEN
+#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_OPEN
+#elif CONFIG_ESP_WIFI_AUTH_WEP
+#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WEP
+#elif CONFIG_ESP_WIFI_AUTH_WPA_PSK
+#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA_PSK
+#elif CONFIG_ESP_WIFI_AUTH_WPA2_PSK
+#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
+#elif CONFIG_ESP_WIFI_AUTH_WPA_WPA2_PSK
+#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA_WPA2_PSK
+#elif CONFIG_ESP_WIFI_AUTH_WPA3_PSK
+#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA3_PSK
+#elif CONFIG_ESP_WIFI_AUTH_WPA2_WPA3_PSK
+#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_WPA3_PSK
+#elif CONFIG_ESP_WIFI_AUTH_WAPI_PSK
+#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WAPI_PSK
 #endif
 
-#define EXAMPLE_ADC_BUFFER_SIZE             4092
-#define EXAMPLE_READ_LEN_BYTES              1400
-#define EXAMPLE_READ_LEN                    (EXAMPLE_READ_LEN_BYTES / sizeof(uC::ADC_continuous::data))
-
 static constexpr const
-char *TAG = "ADC continuous";
+char *TAG = "Eelreless";
 
-static bool IRAM_ATTR
-conversion_done(adc_continuous_handle_t handle,
-               const adc_continuous_evt_data_t *edata,
-               void *user_data) {
-  BaseType_t mustYield = pdFALSE;
-  vTaskNotifyGiveFromISR((TaskHandle_t)user_data, &mustYield);
-
-  return (mustYield == pdTRUE);
-}
+#include "adc.cpp"
+#include "resources.cpp"
 
 extern "C" void app_main() {
-  uC::ADC_continuous adc({
-    .max_store_buf_size = EXAMPLE_ADC_BUFFER_SIZE,
-    .conv_frame_size = EXAMPLE_READ_LEN_BYTES,
-  });
-  
-  if (!adc.is_initiated()) {
-    ESP_LOGE(TAG, "Error intiating ADC continuous");
+  /**
+   * Initiate chip
+   */
+  if (sys::default_net_init()) {
+    ESP_LOGE(TAG, "Error initiating chip");
     return;
   }
 
-  uC::ADC_continuous::pattern ptt[]{
-    {
-      .atten      = EXAMPLE_ADC_ATTEN,
-      .channel    = ADC_CHANNEL_0 & 0x7,
-      .unit       = EXAMPLE_ADC_UNIT,
-      .bit_width  = EXAMPLE_ADC_BIT_WIDTH
-    }, {
-      .atten      = EXAMPLE_ADC_ATTEN,
-      .channel    = ADC_CHANNEL_3 & 0x7,
-      .unit       = EXAMPLE_ADC_UNIT,
-      .bit_width  = EXAMPLE_ADC_BIT_WIDTH
-    }
-  };
-
-  adc.configure({
-    .pattern_num    = sizeof(ptt) / sizeof(ptt[0]),
-    .adc_pattern    = ptt,
-    .sample_freq_hz = 26 * 1000,
-    .conv_mode      = EXAMPLE_ADC_CONV_MODE,
-    .format         = EXAMPLE_ADC_OUTPUT_TYPE,
-  });
-
-  adc.register_handler({
-    .on_conv_done = conversion_done,
-    .on_pool_ovf = nullptr
-  }, xTaskGetCurrentTaskHandle());
-  
-  if (adc.start()) {
-    ESP_LOGE(TAG, "Error starting ADC continuous");
+  /**
+   * Initiating ADC
+   */
+  auto adc = initiate_adc();
+  if (!adc) {
+    ESP_LOGE(TAG, "Error initiating ADC");
     return;
   }
 
-  uC::ADC_continuous::data data[EXAMPLE_READ_LEN]{};
+  /**
+   * WiFi configuration
+   */
+  wifi::config config = {};
+  std::strcpy((char*)config.sta.ssid, EXAMPLE_ESP_WIFI_SSID);
+  std::strcpy((char*)config.sta.password, EXAMPLE_ESP_WIFI_PASS);
+  std::strcpy((char*)config.sta.sae_h2e_identifier, EXAMPLE_H2E_IDENTIFIER);
+  config.sta.threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD;
+  config.sta.sae_pwe_h2e = ESP_WIFI_SAE_MODE;
 
-  while(1) {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+  auto* net_handler = wifi::station::config(config);
+  if (net_handler == nullptr) {
+    ESP_LOGE(TAG,  "Configure WiFi error");
+    return;
+  }
 
-    while (1) {
-      auto result = adc.read(data, EXAMPLE_READ_LEN, 0);
-      if (result) {
-        ESP_LOGI(TAG, "%" PRIu32 " new samples collected", result.readed);
-        for (int i = 0; i < result.readed; ++i) {
-          //cast below are just to make the printf portable to other mCU
-          if (data[i].is_valid(EXAMPLE_ADC_UNIT)) {
-            printf("%" PRIu32 ":%" PRIu32 ", ",
-                  (std::uint32_t)data[i].channel(), (std::uint32_t)data[i].value());
-          } else {
-              ESP_LOGW(TAG, "Invalid data [" EXAMPLE_ADC_UNIT_STR(EXAMPLE_ADC_UNIT) "_%" PRIu32 "_%" PRIx32 "]",
-                       (std::uint32_t)data[i].channel(), (std::uint32_t)data[i].value());
-          }
-        }
-        printf("\n");
-        using namespace std::chrono_literals;
-        sys::delay(500ms); // Need for watchdog
-      } else if (result.error == ESP_ERR_TIMEOUT) {
-        break;
-      }
-    }
+  /**
+   * Starting WiFi/HTTP server
+   */
+  wifi::station::simple_wifi_retry wifi{};
+  http::server_connect_cb([&](auto& server) {
+    server.register_uri(http::server::uri{
+      .uri       = "/current",
+      .method    = HTTP_GET,
+      .handler   = current_get_handler,
+      .user_ctx  = &(*adc)
+    }, http::server::error{
+      .code      = HTTPD_404_NOT_FOUND,
+      .handler   = http_404_error_handler
+    });
+  });
+
+  if (wifi::station::connect()) {
+    ESP_LOGI(TAG, "Error connecting to network");
+    return;
+  }
+
+  wifi.wait();
+
+  if (wifi.is_connected()) {
+    auto ip_info = wifi::station::ip(net_handler);
+    ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
+  } else {
+    ESP_LOGI(TAG, "Failed");
+    return;
+  }
+
+  while (true) {
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(5s);
   }
 }

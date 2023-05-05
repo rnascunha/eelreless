@@ -14,6 +14,7 @@
 #include <limits>
 #include <cstdint>
 
+#include "sys/event.hpp"
 #include "sys/time.hpp"
 
 #include "freertos/FreeRTOS.h"

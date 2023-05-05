@@ -70,8 +70,6 @@ class ADC_continuous {
 
    private:
     adc_digi_output_data_t data_{};
-
-    // friend class ADC_continuous;
   };
 
   struct result {
@@ -86,6 +84,11 @@ class ADC_continuous {
 
   ADC_continuous() noexcept = default;
   ADC_continuous(const config& cfg) noexcept;
+  ADC_continuous(const ADC_continuous&) noexcept = delete;
+  ADC_continuous(ADC_continuous&& adc) noexcept {
+    handler_ = adc.handler_;
+    adc.handler_ = nullptr;
+  }
 
   bool is_initiated() const noexcept;
 
