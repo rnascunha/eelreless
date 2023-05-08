@@ -18,6 +18,8 @@
 #include "esp_http_server.h"
 
 #include "sys/error.hpp"
+#include "sys/event.hpp"
+#include "sys/span.hpp"
 
 namespace http {
 
@@ -31,6 +33,33 @@ class server {
     error_func handler;
   };
 
+  class request {
+   public:
+    request(httpd_req_t* req) noexcept;
+
+    request&
+    header(const char* field, const char* value) noexcept;
+    request&
+    allow_cors(const char* value = "*") noexcept;
+    sys::error
+    send_error(httpd_err_code_t error, const char *usr_msg = "") noexcept;
+
+    [[nodiscard]] int
+    get_socket() const noexcept;
+    [[nodiscard]] httpd_req_t*
+    native() noexcept;
+    [[nodiscard]] httpd_handle_t
+    handler() noexcept;
+
+    template<typename T>
+    sys::error send(sys::span<T> data) noexcept {
+      return httpd_resp_send(req_, (const char*)data.data(), data.size_bytes());
+    }
+
+   private:
+    httpd_req_t* req_;
+  };
+
   using config = httpd_config_t;
   using handler = httpd_handle_t;
 
@@ -40,6 +69,10 @@ class server {
   server() noexcept = default;
   server(std::uint16_t port) noexcept;
   server(const config&) noexcept;
+
+  handler native() const noexcept {
+    return handler_;
+  }
 
   ~server() noexcept {
     stop();
@@ -81,6 +114,16 @@ class server {
  private:
   handler handler_ = nullptr;
 };
+
+sys::error
+register_handler(esp_http_server_event_id_t,
+                 esp_event_handler_t,
+                 void* arg = nullptr) noexcept;
+
+sys::error
+queue(httpd_handle_t handler,
+      httpd_work_fn_t func,
+      void* arg = nullptr) noexcept;
 
 }  // namespace http
 

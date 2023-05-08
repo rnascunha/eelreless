@@ -1,10 +1,10 @@
 #include <optional>
 
 #include "adc/continuous.hpp"
+#include "wave.hpp"
 
-#define EXAMPLE_ADC_UNIT                    ADC_UNIT_1
-#define _EXAMPLE_ADC_UNIT_STR(unit)         #unit
-#define EXAMPLE_ADC_UNIT_STR(unit)          _EXAMPLE_ADC_UNIT_STR(unit)
+#include "adc.hpp"
+
 #define EXAMPLE_ADC_CONV_MODE               ADC_CONV_SINGLE_UNIT_1
 #define EXAMPLE_ADC_ATTEN                   ADC_ATTEN_DB_11
 #define EXAMPLE_ADC_BIT_WIDTH               SOC_ADC_DIGI_MAX_BITWIDTH
@@ -15,11 +15,8 @@
 #define EXAMPLE_ADC_OUTPUT_TYPE             ADC_DIGI_OUTPUT_FORMAT_TYPE2
 #endif
 
-#define EXAMPLE_ADC_BUFFER_SIZE             4092
-#define EXAMPLE_READ_LEN_BYTES              1400
-#define EXAMPLE_READ_LEN                    (EXAMPLE_READ_LEN_BYTES / sizeof(uC::ADC_continuous::data))
-
-std::optional<uC::ADC_continuous> initiate_adc() {
+[[nodiscard]] std::optional<uC::ADC_continuous>
+initiate_adc() noexcept {
   auto adc = std::make_optional<uC::ADC_continuous>(uC::ADC_continuous::config{
     .max_store_buf_size = EXAMPLE_ADC_BUFFER_SIZE,
     .conv_frame_size = EXAMPLE_READ_LEN_BYTES,
@@ -49,4 +46,40 @@ std::optional<uC::ADC_continuous> initiate_adc() {
   }
 
   return adc;
+}
+
+[[nodiscard]] 
+bool validate_data(uC::ADC_continuous::data* begin,
+                    std::size_t size) noexcept {
+  auto end = begin + size;
+  while (begin != end) {
+    if (!begin->is_valid(EXAMPLE_ADC_UNIT))
+      return false;
+    ++begin;
+  }
+  return true;
+}
+
+// Need to incresase size of task to put array inside
+static
+double bbout[EXAMPLE_READ_LEN]{};
+
+[[nodiscard]] 
+double process_adc_data(uC::ADC_continuous::data* data,
+                        std::size_t size) noexcept {
+  using value_type = uC::ADC_continuous::data::value_type;
+  value_type* begin = &data->raw_data().val;
+  value_type* end = begin;
+  for (std::size_t i = 0; i < size; ++i)
+    *end++ = data[i].value();
+
+  double* bout = bbout;
+  double* eout = bout + size;
+
+  wave::filter_first_order(begin, end, 0.8);
+  wave::convert(begin, end, bout);
+  wave::remove_constant(bout, eout,
+                          wave::mean(bout, eout));
+
+  return wave::rms_sine(bout, eout);
 }

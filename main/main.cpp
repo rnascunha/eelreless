@@ -14,15 +14,18 @@
 
 #include "esp_log.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-
 #include "sys/sys.hpp"
 
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
 #include "http/server_connect_cb.hpp"
+
+#if CONFIG_ENABLE_MDNS
+#include "mdns.h"
+#endif  // CONFIG_ENABLE_MDNS
+
+#include "adc.hpp"
+#include "resources.cpp"
 
 /// WIFI
 #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
@@ -48,7 +51,7 @@
 #elif CONFIG_ESP_WIFI_AUTH_WPA2_PSK
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
 #elif CONFIG_ESP_WIFI_AUTH_WPA_WPA2_PSK
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA_WPA2_PSK
+  #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA_WP\A2_PSK
 #elif CONFIG_ESP_WIFI_AUTH_WPA3_PSK
 #define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA3_PSK
 #elif CONFIG_ESP_WIFI_AUTH_WPA2_WPA3_PSK
@@ -60,8 +63,16 @@
 static constexpr const
 char *TAG = "Eelreless";
 
-#include "adc.cpp"
-#include "resources.cpp"
+#if CONFIG_ENABLE_MDNS
+void init_mdns() noexcept {
+  if (mdns_init()) {
+      ESP_LOGW(TAG, "MDNS Init failed");
+      return;
+  }
+  mdns_hostname_set(CONFIG_MDNS_HOSTNAME);
+  ESP_LOGI(TAG, "Hostname: " CONFIG_MDNS_HOSTNAME);
+}
+#endif
 
 extern "C" void app_main() {
   /**
@@ -128,8 +139,11 @@ extern "C" void app_main() {
     return;
   }
 
+#if CONFIG_ENABLE_MDNS
+  init_mdns();
+#endif
+
   while (true) {
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(5s);
+    sys::delay(sys::time::max);
   }
 }

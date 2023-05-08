@@ -90,4 +90,63 @@ server::initiate(const config& config) noexcept {
   return handler;
 }
 
+server::request::request(httpd_req_t* req) noexcept
+: req_(req){}
+
+server::request&
+server::request::header(const char* field, const char* value) noexcept {
+  httpd_resp_set_hdr(req_, field, value);
+  return *this;
+}
+
+server::request&
+server::request::allow_cors(const char* value /* = "*" */) noexcept {
+  return header("Access-Control-Allow-Origin", value);
+}
+
+sys::error
+server::request::send_error(httpd_err_code_t error,
+                            const char *usr_msg /* = "" */) noexcept {
+  return httpd_resp_send_err(req_, error, usr_msg);
+}
+
+[[nodiscard]] int
+server::request::get_socket() const noexcept {
+  return httpd_req_to_sockfd(req_);
+}
+
+[[nodiscard]] httpd_req_t*
+server::request::native() noexcept {
+  return req_;
+}
+
+[[nodiscard]] httpd_handle_t
+server::request::handler() noexcept {
+  return req_->handle;
+}
+
+sys::error
+register_handler(esp_http_server_event_id_t id,
+                 esp_event_handler_t handler,
+                 void* arg /* = nullptr */) noexcept {
+  return sys::event::register_handler(ESP_HTTP_SERVER_EVENT,
+                                      id,
+                                      handler,
+                                      arg);
+}
+
+sys::error
+queue(httpd_handle_t handler,
+      httpd_work_fn_t func,
+      void* arg /* = nullptr */) noexcept {
+  return httpd_queue_work(handler, func, arg);
+}
+
+sys::error
+queue(server::request req,
+      httpd_work_fn_t func,
+      void* arg /* = nullptr */) noexcept {
+  return queue(req.handler(), func, arg);
+}
+
 }  // namespace http

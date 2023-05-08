@@ -33,7 +33,7 @@ struct simple_server_connect {
 
   server svr;
   httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-  std::array<http_uri_err, sizeof...(Args)> uris;
+  std::array<uri_error, sizeof...(Args)> uris;
 };
 
 

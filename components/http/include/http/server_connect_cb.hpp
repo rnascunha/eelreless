@@ -13,7 +13,6 @@
 
 #include <cstdint>
 #include <type_traits>
-#include <array>
 
 #include "esp_wifi.h"
 #include "esp_http_server.h"
