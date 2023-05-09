@@ -11,6 +11,8 @@
 #ifndef COMPONENTS_WEBSOCKET_SERVER_HPP_
 #define COMPONENTS_WEBSOCKET_SERVER_HPP_
 
+#include "sdkconfig.h"
+
 #ifdef CONFIG_HTTPD_WS_SUPPORT
 
 #include <type_traits>

@@ -1,3 +1,5 @@
+#include "sdkconfig.h"
+
 #ifdef CONFIG_HTTPD_WS_SUPPORT
 
 #include <span>
