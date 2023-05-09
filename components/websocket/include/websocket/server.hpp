@@ -42,11 +42,39 @@ void event_handler(void* event_handler_arg,
   CallClose{}(*(int*) event_data, event_handler_arg);
 }
 
-struct config {
+template<typename OnClose>
+sys::error
+register_handler(void* user_ctx = nullptr) {
+  http::unregister_handler(HTTP_SERVER_EVENT_DISCONNECTED,
+                         &event_handler<OnClose>);
+  return http::register_handler(HTTP_SERVER_EVENT_DISCONNECTED,
+                                &event_handler<OnClose>,
+                                user_ctx);
+}
+
+struct uri {
   const char* uri = "/";
   void*       user_ctx = nullptr;
   bool        control_frames = false;
   const char* supported_subprotocol = nullptr;
+
+  template<typename OnData,
+           typename OnOpen = std::nullptr_t,
+           typename OnClose = std::nullptr_t>
+  http::server::uri get() noexcept {
+    if constexpr (!std::is_same_v<OnClose, std::nullptr_t>) {
+      register_handler<OnClose>(user_ctx);
+    }
+    return http::server::uri{
+      .uri          = uri,
+      .method       = HTTP_GET,
+      .handler      = ws_handler<OnData, OnOpen>,
+      .user_ctx     = user_ctx,
+      .is_websocket = true,
+      .handle_ws_control_frames = control_frames,
+      .supported_subprotocol = supported_subprotocol
+    };
+  }
 };
 
 using frame = httpd_ws_frame_t;
@@ -92,38 +120,6 @@ struct client {
 
   httpd_handle_t hd = nullptr;
   int            fd = 0;
-};
-
-template<typename OnData,
-         typename OnOpen = std::nullptr_t,
-         typename OnClose = std::nullptr_t>
-class server {
- public:
-  server(const config& config) 
-   : ssc_{intialize{config}} {
-    if constexpr (!std::is_same_v<OnClose, std::nullptr_t>)
-      http::register_handler(HTTP_SERVER_EVENT_DISCONNECTED,
-                           &event_handler<OnClose>,
-                           config.user_ctx);
-  }
-
- private:
-  struct intialize {
-    config cfg;
-    void operator()(http::server& server) noexcept {
-      server.register_uri(http::server::uri{
-        .uri          = cfg.uri,
-        .method       = HTTP_GET,
-        .handler      = ws_handler<OnData, OnOpen>,
-        .user_ctx     = cfg.user_ctx,
-        .is_websocket = true,
-        .handle_ws_control_frames = cfg.control_frames,
-        .supported_subprotocol = cfg.supported_subprotocol
-      });
-    }
-  };
-
-  http::server_connect_cb<intialize> ssc_;
 };
 
 sys::error

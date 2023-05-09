@@ -11,6 +11,8 @@
 #ifndef SYSTEM_EVENT_HPP_
 #define SYSTEM_EVENT_HPP_
 
+#include <cstdint>
+
 #include "esp_event.h"
 
 #include "sys/error.hpp"
@@ -19,14 +21,21 @@ namespace sys {
 namespace event {
 
 sys::error register_handler(esp_event_base_t base,
-              int32_t id,
+              std::int32_t id,
               esp_event_handler_t handler,
               void* arg = nullptr) noexcept;
 sys::error register_handler(esp_event_base_t base,
-              int32_t id,
+              std::int32_t id,
               esp_event_handler_instance_t& instance,
               esp_event_handler_t handler,
               void* arg = nullptr) noexcept;
+
+sys::error unregister_handler(esp_event_base_t base,
+              std::int32_t id,
+              esp_event_handler_t handler) noexcept;
+sys::error unregister_handler(esp_event_base_t base,
+              std::int32_t id,
+              esp_event_handler_instance_t handler) noexcept;
 
 }  // namespace event
 }  // namespace sys

@@ -136,6 +136,14 @@ register_handler(esp_http_server_event_id_t id,
 }
 
 sys::error
+unregister_handler(esp_http_server_event_id_t id,
+                 esp_event_handler_t handler) noexcept {
+  return sys::event::register_handler(ESP_HTTP_SERVER_EVENT,
+                                      id,
+                                      handler);
+}
+
+sys::error
 queue(httpd_handle_t handler,
       httpd_work_fn_t func,
       void* arg /* = nullptr */) noexcept {

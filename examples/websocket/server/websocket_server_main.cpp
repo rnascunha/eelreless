@@ -20,6 +20,7 @@
 
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
+#include "http/server_connect_cb.hpp"
 #include "websocket/server.hpp"
 
 #include "wifi_args.hpp"
@@ -29,8 +30,7 @@ char *TAG = "WS Server";
 
 websocket::client ws_client;
 
-static void my_ws_async_send()
-{
+static void my_ws_async_send() {
   static const char * data = "My Async data";
   if (ws_client.hd == nullptr)
     return;
@@ -45,8 +45,7 @@ static void my_ws_async_send()
 /*
  * async send function, which we put into the httpd work queue
  */
-static void ws_async_send(void *arg)
-{
+static void ws_async_send(void *arg) {
     static const char * data = "Async data";
     auto *client = reinterpret_cast<websocket::client*>(arg);
 
@@ -127,14 +126,16 @@ extern "C" void app_main() {
    * Starting WiFi/Websocket server
    */
   wifi::station::simple_wifi_retry wifi{};
-  websocket::server<ws_data, ws_open, ws_close>(
-    websocket::config{
-      .uri                = "/ws",
-      .user_ctx           = nullptr,
-      .control_frames     = false,
-      .supported_subprotocol = nullptr
-    }
-  );
+  http::server_connect_cb([](auto& server) {
+    server.register_uri(
+      websocket::uri{
+        .uri            = "/ws",
+        .user_ctx       = nullptr,
+        .control_frames = false,
+        .supported_subprotocol = nullptr
+      }.get<ws_data, ws_open, ws_close>()
+    );
+  });
 
   if (wifi::station::connect()) {
     ESP_LOGI(TAG, "Error connecting to network");

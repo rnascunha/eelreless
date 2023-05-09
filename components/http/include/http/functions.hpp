@@ -33,8 +33,6 @@ void
 register_uris(server& handler, const std::array<uri_error, N>& uris) noexcept {
   for (const auto& uri : uris) {
     std::visit(overloaded{
-      // [&handler](const server::uri& uri) { handler.register_uri(uri); },
-      // [&handler](const server::error& err) { handler.register_uri(err.code, err.handler); }
       [&handler](const auto& uuri) { handler.register_uri(uuri); }
     }, uri);
   }
