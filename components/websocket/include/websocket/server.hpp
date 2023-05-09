@@ -11,6 +11,8 @@
 #ifndef COMPONENTS_WEBSOCKET_SERVER_HPP_
 #define COMPONENTS_WEBSOCKET_SERVER_HPP_
 
+#ifdef CONFIG_HTTPD_WS_SUPPORT
+
 #include <type_traits>
 #include <memory>
 #include <span>
@@ -129,5 +131,7 @@ queue(request&, httpd_work_fn_t, void* = nullptr) noexcept;
 
 
 }  // namespace websocket
+
+#endif  // CONFIG_HTTPD_WS_SUPPORT
 
 #endif  // COMPONENTS_WEBSOCKET_SERVER_HPP_

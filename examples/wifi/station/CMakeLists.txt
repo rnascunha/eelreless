@@ -1,3 +1,3 @@
 idf_component_register(SRCS "wifi_station_main.cpp"
                     INCLUDE_DIRS "."
-                    requires sys)
+                    REQUIRES sys wifi)

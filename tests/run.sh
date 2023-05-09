@@ -15,6 +15,9 @@ examples_list=("websocket/server" "wifi/station")
 
 build_dir=build/
 
+success=()
+fail=()
+
 for example in ${examples_list[@]}
 do
   example_dir=$examples_root/$example
@@ -23,7 +26,12 @@ do
   if [ $? -ne 0 ]
   then
     echo "Error compiling \"$example_dir\""
+    fail+=$example_dir
   else
     echo "\"$example_dir\" compiled succefully"
+    success+=$example_dir
   fi
 done
+
+echo "Success: ${success[@]}"
+echo "Fail: ${fail[@]}"

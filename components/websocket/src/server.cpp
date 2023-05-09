@@ -1,3 +1,5 @@
+#ifdef CONFIG_HTTPD_WS_SUPPORT
+
 #include <span>
 
 #include "esp_http_server.h"
@@ -91,3 +93,5 @@ queue(request& req, httpd_work_fn_t func, void* arg /* = nullptr */) noexcept {
 }
 
 }  // namespace websocket
+
+#endif  // CONFIG_HTTPD_WS_SUPPORT

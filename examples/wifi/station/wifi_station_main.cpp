@@ -57,7 +57,7 @@ extern "C" void app_main() {
   if (retry.is_connected()) {
     auto ip_info = wifi::station::ip(net_handler);
     ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
-  } else if (retry.failed) {
+  } else if (retry.failed()) {
     ESP_LOGI(TAG, "Failed");
     return;
   } else {
