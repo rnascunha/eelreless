@@ -16,6 +16,4 @@ jobs:
         esp_idf_version: release-v5.1
         target: esp32
         path: '.'
-        command: idf.py build
-    - name: Compile all tests
-      run: bash examples/run.sh .
+        command: idf.py build && bash examples/run.sh .
