@@ -9,6 +9,7 @@
  * 
  */
 #include <cstdio>
+#include <span>
 
 #include "esp_err.h"
 #include "esp_http_server.h"
@@ -16,8 +17,6 @@
 #include "http/server.hpp"
 #include "adc/continuous.hpp"
 #include "adc.hpp"
-
-#include "sys/span.hpp"
 
 static esp_err_t
 current_get_handler(httpd_req_t *request) {
@@ -40,7 +39,7 @@ current_get_handler(httpd_req_t *request) {
     } else {
       char str[10]{};
       auto size = std::snprintf(str, 10, "%f", process_adc_data(data, result.readed));
-      req.send(sys::span{str, (std::size_t)size});
+      req.send(std::span{str, (std::size_t)size});
     }
   } else if (result.error == ESP_ERR_TIMEOUT) {
     req.send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "Error timeout reading");
