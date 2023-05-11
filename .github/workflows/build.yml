@@ -18,4 +18,4 @@ jobs:
         path: '.'
         command: idf.py build
     - name: Compile all tests
-      uses: bash examples/run.sh .
+      run: bash examples/run.sh .
