@@ -17,6 +17,7 @@
 #include "sys/sys.hpp"
 #include "sys/time.hpp"
 
+#include "wifi/common.hpp"
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
 
@@ -26,6 +27,12 @@ static constexpr const
 char *TAG = "WiFi Station";
 
 extern "C" void app_main() {
+  auto err = sys::default_net_init();
+  if (err) {
+    ESP_LOGE(TAG, "Erro initializing chip [%d]", err.value());
+    return;
+  }
+
   /**
    * WiFi configuration/connection
    */
@@ -43,9 +50,9 @@ extern "C" void app_main() {
   }
 
   wifi::station::simple_wifi_retry retry{EXAMPLE_ESP_MAXIMUM_RETRY};
-  sys::error ret = wifi::station::connect();
-  if (ret) {
-    ESP_LOGE(TAG, "Connect WiFi error %d", ret.value());
+  err = wifi::start();
+  if (err) {
+    ESP_LOGE(TAG, "Connect WiFi error %d", err.value());
     return;
   }
 
@@ -55,7 +62,7 @@ extern "C" void app_main() {
   retry.wait();
 
   if (retry.is_connected()) {
-    auto ip_info = wifi::station::ip(net_handler);
+    auto ip_info = wifi::ip(net_handler);
     ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
   } else if (retry.failed()) {
     ESP_LOGI(TAG, "Failed");

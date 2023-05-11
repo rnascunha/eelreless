@@ -43,4 +43,8 @@ void delay(sys::time::ticks ticks) noexcept {
   return vTaskDelay(ticks);
 }
 
+void reboot() noexcept {
+  esp_restart();
+}
+
 }  // namespace sys

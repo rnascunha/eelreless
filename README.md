@@ -19,6 +19,6 @@ $ curl <ip>/current
 ```
 Or if mDNS enabled (with name `eelreless`):
 ```bash
-$ curl eelreless/current
+$ curl eelreless.local/current
 ```
 

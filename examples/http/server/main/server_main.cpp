@@ -9,7 +9,6 @@
  * 
  */
 #include <cstring>
-#include <thread>
 #include <chrono>
 
 #include "esp_log.h"
@@ -18,6 +17,7 @@
 #include "sys/sys.hpp"
 #include "sys/time.hpp"
 
+#include "wifi/common.hpp"
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
 
@@ -25,42 +25,18 @@
 
 #include "resources.cpp"
 
-#define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
-#define EXAMPLE_ESP_WIFI_PASS      CONFIG_ESP_WIFI_PASSWORD
-#define EXAMPLE_ESP_MAXIMUM_RETRY  CONFIG_ESP_MAXIMUM_RETRY
-
-#if CONFIG_ESP_WPA3_SAE_PWE_HUNT_AND_PECK
-#define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_HUNT_AND_PECK
-#define EXAMPLE_H2E_IDENTIFIER ""
-#elif CONFIG_ESP_WPA3_SAE_PWE_HASH_TO_ELEMENT
-#define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_HASH_TO_ELEMENT
-#define EXAMPLE_H2E_IDENTIFIER CONFIG_ESP_WIFI_PW_ID
-#elif CONFIG_ESP_WPA3_SAE_PWE_BOTH
-#define ESP_WIFI_SAE_MODE WPA3_SAE_PWE_BOTH
-#define EXAMPLE_H2E_IDENTIFIER CONFIG_ESP_WIFI_PW_ID
-#endif
-#if CONFIG_ESP_WIFI_AUTH_OPEN
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_OPEN
-#elif CONFIG_ESP_WIFI_AUTH_WEP
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WEP
-#elif CONFIG_ESP_WIFI_AUTH_WPA_PSK
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA_PSK
-#elif CONFIG_ESP_WIFI_AUTH_WPA2_PSK
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_PSK
-#elif CONFIG_ESP_WIFI_AUTH_WPA_WPA2_PSK
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA_WPA2_PSK
-#elif CONFIG_ESP_WIFI_AUTH_WPA3_PSK
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA3_PSK
-#elif CONFIG_ESP_WIFI_AUTH_WPA2_WPA3_PSK
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WPA2_WPA3_PSK
-#elif CONFIG_ESP_WIFI_AUTH_WAPI_PSK
-#define ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD WIFI_AUTH_WAPI_PSK
-#endif
+#include "wifi_args.hpp"
 
 static constexpr const
 char *TAG = "HTTP Server";
 
 extern "C" void app_main() {
+  auto err = sys::default_net_init();
+  if (err) {
+    ESP_LOGE(TAG, "Erro initializing chip [%d]", err.value());
+    return;
+  }
+
   /**
    * WiFi configuration/connection
    */
@@ -97,9 +73,9 @@ extern "C" void app_main() {
       }};
   http_server.config.server_port = 80;
   
-  sys::error ret = wifi::station::connect();
-  if (ret) {
-    ESP_LOGE(TAG, "Connect WiFi error %d", ret.value());
+  err = wifi::start();
+  if (err) {
+    ESP_LOGE(TAG, "Connect WiFi error %d", err.value());
     return;
   }
 
@@ -109,15 +85,15 @@ extern "C" void app_main() {
   retry.wait();
 
   if (retry.is_connected()) {
-    auto ip_info = wifi::station::ip(net_handler);
+    auto ip_info = wifi::ip(net_handler);
     ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
   } else {
     ESP_LOGI(TAG, "Failed");
     return;
   }
 
-  using namespace std::chrono_literals;
   while (true) {
-    std::this_thread::sleep_for(5s);
+    using namespace std::chrono_literals;
+    sys::delay(5s);
   }
 }

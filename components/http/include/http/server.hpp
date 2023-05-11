@@ -14,12 +14,12 @@
 #include <cstdint>
 #include <type_traits>
 #include <functional>
+#include <span>
 
 #include "esp_http_server.h"
 
 #include "sys/error.hpp"
 #include "sys/event.hpp"
-#include "sys/span.hpp"
 
 namespace http {
 
@@ -40,9 +40,14 @@ class server {
     request&
     header(const char* field, const char* value) noexcept;
     request&
+    content_type(const char*) noexcept;
+    request&
     allow_cors(const char* value = "*") noexcept;
     sys::error
     send_error(httpd_err_code_t error, const char *usr_msg = "") noexcept;
+    
+    [[nodiscard]] void*
+    context() noexcept;
 
     [[nodiscard]] int
     get_socket() const noexcept;
@@ -51,10 +56,16 @@ class server {
     [[nodiscard]] httpd_handle_t
     handler() noexcept;
 
-    template<typename T>
-    sys::error send(sys::span<T> data) noexcept {
+    template<typename T, std::size_t N>
+    int receive(std::span<T, N> data) noexcept {
+      return httpd_req_recv(req_, data.data(), data.size_bytes());
+    }
+
+    template<typename T, std::size_t N>
+    sys::error send(std::span<T, N> data) noexcept {
       return httpd_resp_send(req_, (const char*)data.data(), data.size_bytes());
     }
+    sys::error send(const char*) noexcept;
 
    private:
     httpd_req_t* req_;
@@ -118,16 +129,21 @@ class server {
 sys::error
 register_handler(esp_http_server_event_id_t,
                  esp_event_handler_t,
-                 void* arg = nullptr) noexcept;
+                 void* = nullptr) noexcept;
 
 sys::error
 unregister_handler(esp_http_server_event_id_t,
                    esp_event_handler_t) noexcept;
 
 sys::error
-queue(httpd_handle_t handler,
-      httpd_work_fn_t func,
-      void* arg = nullptr) noexcept;
+queue(httpd_handle_t,
+      httpd_work_fn_t,
+      void* = nullptr) noexcept;
+
+sys::error
+queue(server::request,
+      httpd_work_fn_t,
+      void* = nullptr) noexcept;
 
 }  // namespace http
 

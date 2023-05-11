@@ -40,15 +40,5 @@ esp_netif_t* config(wifi::config& wifi_config) noexcept {
   return net;
 }
 
-sys::error connect() noexcept {
-  return esp_wifi_start();
-}
-
-esp_netif_ip_info_t ip(esp_netif_t* handler) noexcept {
-  esp_netif_ip_info_t ip_info{};
-  esp_netif_get_ip_info(handler, &ip_info);
-  return ip_info;
-}
-
 }   // namespace station
 }   // namespace wifi

@@ -2,6 +2,7 @@
 
 #ifdef CONFIG_HTTPD_WS_SUPPORT
 
+#include <cstring>
 #include <span>
 
 #include "esp_http_server.h"

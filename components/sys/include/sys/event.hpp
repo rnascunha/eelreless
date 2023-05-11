@@ -20,22 +20,22 @@
 namespace sys {
 namespace event {
 
-sys::error register_handler(esp_event_base_t base,
-              std::int32_t id,
-              esp_event_handler_t handler,
-              void* arg = nullptr) noexcept;
-sys::error register_handler(esp_event_base_t base,
-              std::int32_t id,
-              esp_event_handler_instance_t& instance,
-              esp_event_handler_t handler,
-              void* arg = nullptr) noexcept;
+sys::error register_handler(esp_event_base_t,
+              std::int32_t ,
+              esp_event_handler_t,
+              void* = nullptr) noexcept;
+sys::error register_handler(esp_event_base_t,
+              std::int32_t,
+              esp_event_handler_instance_t&,
+              esp_event_handler_t,
+              void* = nullptr) noexcept;
 
-sys::error unregister_handler(esp_event_base_t base,
-              std::int32_t id,
-              esp_event_handler_t handler) noexcept;
-sys::error unregister_handler(esp_event_base_t base,
-              std::int32_t id,
-              esp_event_handler_instance_t handler) noexcept;
+sys::error unregister_handler(esp_event_base_t,
+              std::int32_t,
+              esp_event_handler_t) noexcept;
+sys::error unregister_handler(esp_event_base_t,
+              std::int32_t,
+              esp_event_handler_instance_t) noexcept;
 
 }  // namespace event
 }  // namespace sys

@@ -9,6 +9,7 @@
  * 
  */
 #include <cstdint>
+#include <cstring>
 
 #include "esp_http_server.h"
 
@@ -17,7 +18,7 @@
 
 namespace http {
 
-server::server(std::uint16_t port /* = 80 */) noexcept {
+server::server(std::uint16_t port) noexcept {
   config config = HTTPD_DEFAULT_CONFIG();
   config.server_port = port;
   handler_ = initiate(config);
@@ -100,6 +101,12 @@ server::request::header(const char* field, const char* value) noexcept {
 }
 
 server::request&
+server::request::content_type(const char* type) noexcept {
+  httpd_resp_set_type(req_, type);
+  return *this;
+}
+
+server::request&
 server::request::allow_cors(const char* value /* = "*" */) noexcept {
   return header("Access-Control-Allow-Origin", value);
 }
@@ -108,6 +115,16 @@ sys::error
 server::request::send_error(httpd_err_code_t error,
                             const char *usr_msg /* = "" */) noexcept {
   return httpd_resp_send_err(req_, error, usr_msg);
+}
+
+sys::error
+server::request::send(const char* data) noexcept {
+  return httpd_send(req_, data, std::strlen(data));
+}
+
+[[nodiscard]] void*
+server::request::context() noexcept {
+  return req_->user_ctx;
 }
 
 [[nodiscard]] int

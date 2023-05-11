@@ -53,6 +53,20 @@
     "thread": "cpp",
     "cinttypes": "cpp",
     "typeinfo": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "bitset": "cpp",
+    "complex": "cpp",
+    "condition_variable": "cpp",
+    "list": "cpp",
+    "map": "cpp",
+    "set": "cpp",
+    "netfwd": "cpp",
+    "optional": "cpp",
+    "regex": "cpp",
+    "fstream": "cpp",
+    "future": "cpp",
+    "iostream": "cpp",
+    "mutex": "cpp",
+    "span": "cpp"
   }
 }

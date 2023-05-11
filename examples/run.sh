@@ -86,12 +86,14 @@ print_success() {
 components=$PWD/components
 
 examples_root=$PWD/examples
-examples_list=("websocket/server"
-               "wifi/station"
+examples_list=("mcu/adc_continuous"
                "wave"
-               "mcu/adc_continuous"
+               "websocket/server"
+               "wifi/station"
+               "wifi/ap"
                "http/server"
-               "http/server_cb")
+               "http/server_cb"
+               "http/login_wifi")
 
 build() {
   local -n ans=$1
@@ -135,6 +137,8 @@ clean_build_all() {
   echo "Success: " ${success[@]}
   echo "Fail   : " ${fail[@]}
 }
+
+idf.py set-target esp32 >&3
 
 print_header $0 $@
 clean_build_all 3

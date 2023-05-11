@@ -18,6 +18,7 @@
 
 #include "sys/sys.hpp"
 
+#include "wifi/common.hpp"
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
 #include "http/server_connect_cb.hpp"
@@ -137,7 +138,7 @@ extern "C" void app_main() {
     );
   });
 
-  if (wifi::station::connect()) {
+  if (wifi::start()) {
     ESP_LOGI(TAG, "Error connecting to network");
     return;
   }
@@ -145,7 +146,7 @@ extern "C" void app_main() {
   wifi.wait();
 
   if (wifi.is_connected()) {
-    auto ip_info = wifi::station::ip(net_handler);
+    auto ip_info = wifi::ip(net_handler);
     ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
   } else {
     ESP_LOGI(TAG, "Failed");

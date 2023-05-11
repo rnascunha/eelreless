@@ -18,6 +18,8 @@
 
 #include "sys/time.hpp"
 #include "sys/event.hpp"
+
+#include "wifi/common.hpp"
 #include "wifi/simple_wifi_retry.hpp"
 
 namespace wifi {
@@ -92,7 +94,7 @@ simple_wifi_retry::failed() const noexcept {
 }
 
 void register_handler(simple_wifi_retry& instance) noexcept {
-  sys::event::register_handler(WIFI_EVENT, ESP_EVENT_ANY_ID, &simple_wifi_retry::handler, &instance);
+  wifi::register_handler(ESP_EVENT_ANY_ID, &simple_wifi_retry::handler, &instance);
   sys::event::register_handler(IP_EVENT, IP_EVENT_STA_GOT_IP, &simple_wifi_retry::handler, &instance);
 }
 

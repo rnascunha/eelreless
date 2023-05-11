@@ -11,22 +11,14 @@
 #ifndef COMPONENTS_WIFI_STATION_HPP_
 #define COMPONENTS_WIFI_STATION_HPP_
 
-#include "esp_system.h"
 #include "esp_netif.h"
-#include "esp_wifi.h"
 
-#include "sys/error.hpp"
+#include "wifi/common.hpp"
 
 namespace wifi {
-
-using config = wifi_config_t;
-
 namespace station {
 
-esp_netif_t* config(wifi::config& wifi_config) noexcept;
-sys::error connect() noexcept;
-esp_netif_ip_info_t ip(esp_netif_t* handler) noexcept;
-
+esp_netif_t* config(wifi::config&) noexcept;
 
 }   // namespace station
 }   // namespace wifi
