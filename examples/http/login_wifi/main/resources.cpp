@@ -28,8 +28,8 @@ static bool validate_ssid(const std::string_view& ssid) noexcept {
   return ssid.size() >= 2 && ssid.size() <= 32;
 }
 
-static bool validate_password(const std::string_view& ssid) noexcept {
-  return ssid.size() >= 8 && ssid.size() <= 64;
+static bool validate_password(const std::string_view& pass) noexcept {
+  return pass.size() >= 8 && pass.size() <= 64;
 }
 
 /* An HTTP GET handler */
@@ -70,7 +70,7 @@ web_post_handler(httpd_req_t *request) {
   }
 
   std::string_view pass(sep + 1, size - ssid_size - 1);
-  if (!validate_password(ssid)) {
+  if (!validate_password(pass)) {
     ESP_LOGW(TAGG, "Invalid password");
     req.send("Invalid password");
     return ESP_OK;

@@ -38,12 +38,6 @@
 static constexpr const
 char *TAG = "LoginWifi";
 
-static constexpr const
-gpio_num_t pin_button = (gpio_num_t)CONFIG_PIN_BUTTON;
-
-static constexpr const
-int seconds_to_erase = CONFIG_TIME_HOLD_BUTTON;
-
 extern "C" void app_main() {
   auto err = sys::default_net_init();
   if (err) {
@@ -57,6 +51,14 @@ extern "C" void app_main() {
     ESP_LOGE(TAG, "Error initiating NVS storage");
     return;
   }
+
+  auto reset_reboot = [&storage]() {
+    storage.erase(NVS_KEY_SSID);
+    storage.erase(NVS_KEY_PASS);
+    storage.commit();
+    ESP_LOGI(TAG, "Erased NVS SSID and PASSWORD. Rebooting...");
+    sys::reboot();
+  };
 
   char ssid[64];
   std::size_t size = 64;
@@ -76,6 +78,7 @@ extern "C" void app_main() {
   err = storage.get(NVS_KEY_PASS, ssid, size);
   if (err) {
     ESP_LOGE(TAG, "Password not configured %d", err.value());
+    reset_reboot();
     return;
   }
   std::strcpy((char*)config.sta.password, ssid);
@@ -87,6 +90,7 @@ extern "C" void app_main() {
   auto* net_handler = wifi::station::config(config);
   if (net_handler == nullptr) {
     ESP_LOGE(TAG,  "Configure WiFi error");
+    sys::reboot();
     return;
   }
 
@@ -94,15 +98,21 @@ extern "C" void app_main() {
   err = wifi::start();
   if (err) {
     ESP_LOGE(TAG, "Connect WiFi error %d", err.value());
+    sys::reboot();
     return;
   }
 
   ESP_LOGI(TAG, "WiFi connecting to SSID:%s password:%s",
                  config.sta.ssid, config.sta.password);
 
-  do {
-    retry.wait();
-  } while(retry.failed());
+  retry.wait();
+
+  if (retry.failed()) {
+    ESP_LOGW(TAG, "Failed to connect to SSID:%s password:%s. Reseting parameters and rebooting",
+                 config.sta.ssid, config.sta.password);
+    reset_reboot();
+    return;
+  }
 
   auto ip_info = wifi::ip(net_handler);
   ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
@@ -111,21 +121,10 @@ extern "C" void app_main() {
   init_mdns();
 #endif  // CONFIG_ENABLE_MDNS == 1
 
-  int count = 0;
-  mcu::gpio button(pin_button, GPIO_MODE_INPUT);
+  debouce btn(mcu::gpio((gpio_num_t)CONFIG_PIN_BUTTON, GPIO_MODE_INPUT),
+              CONFIG_TIME_HOLD_BUTTON);
   while (true) {
     using namespace std::chrono_literals;
-    sys::delay(1s);
-    if (button.read() == 0) {
-      if (++count == seconds_to_erase) {
-        storage.erase(NVS_KEY_SSID);
-        storage.erase(NVS_KEY_PASS);
-        storage.commit();
-        ESP_LOGI(TAG, "Erased NVS SSID and PASSWORD. Rebooting...");
-        sys::reboot();
-      }
-    } else {
-      count = 0;
-    }
-  }
+    btn.wait(1s, reset_reboot);
+  };
 }

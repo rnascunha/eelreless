@@ -1,5 +1,15 @@
 #/bin/bash
 
+examples_list=("mcu/adc_continuous"
+               "wave"
+               "websocket/server"
+               "wifi/station"
+               "wifi/ap"
+               "http/server"
+               "http/server_cb"
+               "http/login_wifi"
+               "http/https_server")
+
 # Set redirect
 exec 3> /dev/null
 # exec 3>&1
@@ -84,16 +94,7 @@ print_success() {
 }
 
 components=$PWD/components
-
 examples_root=$PWD/examples
-examples_list=("mcu/adc_continuous"
-               "wave"
-               "websocket/server"
-               "wifi/station"
-               "wifi/ap"
-               "http/server"
-               "http/server_cb"
-               "http/login_wifi")
 
 build() {
   local -n ans=$1

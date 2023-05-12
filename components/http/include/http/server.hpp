@@ -17,6 +17,9 @@
 #include <span>
 
 #include "esp_http_server.h"
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+#include "esp_https_server.h"
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 
 #include "sys/error.hpp"
 #include "sys/event.hpp"
@@ -72,6 +75,9 @@ class server {
   };
 
   using config = httpd_config_t;
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+  using ssl_config = httpd_ssl_config_t;
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
   using handler = httpd_handle_t;
 
   using uri = httpd_uri_t;
@@ -80,17 +86,35 @@ class server {
   server() noexcept = default;
   server(std::uint16_t port) noexcept;
   server(const config&) noexcept;
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+  server(ssl_config&) noexcept;
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 
   handler native() const noexcept {
     return handler_;
   }
 
-  ~server() noexcept {
-    stop();
-  }
-
   sys::error start(const config&) noexcept;
-  sys::error stop() noexcept;
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+  sys::error start(ssl_config&) noexcept;
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+
+  template<bool IsSecure = false>
+  sys::error stop() noexcept {
+    auto ret = ESP_OK;
+    if (handler_ == nullptr)
+      return ret;
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+    if constexpr (IsSecure)
+      ret = httpd_ssl_stop(handler_);
+    else
+#else
+      ret = httpd_stop(handler_);
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+    if (ret == ESP_OK)
+      handler_ = nullptr;
+    return ret;
+  }
 
   sys::error
   register_uri(const uri&) noexcept;
@@ -122,6 +146,11 @@ class server {
 
   [[nodiscard]] static handler
   initiate(const config&) noexcept;
+
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+  [[nodiscard]] static handler
+  initiate(ssl_config&) noexcept;
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
  private:
   handler handler_ = nullptr;
 };

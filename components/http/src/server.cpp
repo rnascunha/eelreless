@@ -12,6 +12,9 @@
 #include <cstring>
 
 #include "esp_http_server.h"
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+#include "esp_https_server.h"
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 
 #include "sys/error.hpp"
 #include "http/server.hpp"
@@ -28,6 +31,12 @@ server::server(const config& config) noexcept {
   handler_ = initiate(config);
 }
 
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+server::server(ssl_config& cfg) noexcept {
+  handler_ = initiate(cfg);
+}
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+
 sys::error
 server::start(const config& config) noexcept {
   auto ret = httpd_start(&handler_, &config);
@@ -36,16 +45,15 @@ server::start(const config& config) noexcept {
   return ret;
 }
 
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 sys::error
-server::stop() noexcept {
-  if (handler_ != nullptr) {
-    auto ret = httpd_stop(handler_);
-    if (ret == ESP_OK)
-      handler_ = nullptr;
-    return ret;
-  }
-  return ESP_OK;
+server::start(ssl_config& cfg) noexcept {
+  auto ret = httpd_ssl_start(&handler_, &cfg);
+  if (ret != ESP_OK)
+    handler_ = nullptr;
+  return ret;
 }
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 
 sys::error
 server::register_uri(const uri& uri) noexcept {
@@ -90,6 +98,15 @@ server::initiate(const config& config) noexcept {
   httpd_start(&handler, &config);
   return handler;
 }
+
+#if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
+[[nodiscard]] server::handler
+server::initiate(ssl_config& cfg) noexcept {
+  handler handler = nullptr;
+  httpd_ssl_start(&handler, &cfg);
+  return handler;
+}
+#endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 
 server::request::request(httpd_req_t* req) noexcept
 : req_(req){}
