@@ -1,3 +1,6 @@
+#include <string_view>
+#include <cstring>
+
 #include "esp_netif.h"
 #include "esp_wifi.h"
 
@@ -41,6 +44,19 @@ sys::error ip(esp_netif_t* driver,
   if(ret0 != ESP_ERR_ESP_NETIF_DHCP_ALREADY_STOPPED)
 	  esp_netif_dhcps_start(driver);
   return ret;
+}
+
+[[nodiscard]] wifi::config
+default_init(std::string_view ssid,
+             std::string_view password /* = "" */) noexcept {
+  wifi::config config = {};
+  std::strncpy((char*)config.ap.ssid, ssid.data(), ssid.size());
+  std::strncpy((char*)config.ap.password, password.data(), password.size());
+
+  if (password.size() == 0)
+    config.ap.authmode = WIFI_AUTH_OPEN;
+
+  return config;
 }
 
 }  // namespace ap

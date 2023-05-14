@@ -11,6 +11,8 @@
 #ifndef COMPONENTS_WIFI_AP_HPP_
 #define COMPONENTS_WIFI_AP_HPP_
 
+#include <string_view>
+
 #include "esp_netif.h"
 #include "esp_wifi.h"
 
@@ -21,6 +23,10 @@ namespace ap {
 
 esp_netif_t* config(wifi::config&) noexcept;
 sys::error ip(esp_netif_t*, const esp_netif_ip_info_t&) noexcept;
+
+[[nodiscard]] wifi::config
+default_init(std::string_view ssid,
+             std::string_view password = "") noexcept;
 
 }  // namespace ap
 }  // namespace wifi

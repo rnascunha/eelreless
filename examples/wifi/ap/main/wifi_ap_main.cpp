@@ -46,9 +46,8 @@ extern "C" void app_main(void) {
     return;
   }
 
-  wifi::config cfg = {};
-  std::strcpy((char*)cfg.ap.ssid, EXAMPLE_ESP_WIFI_SSID);
-  std::strcpy((char*)cfg.ap.password, EXAMPLE_ESP_WIFI_PASS);
+  wifi::config cfg = wifi::ap::default_init(EXAMPLE_ESP_WIFI_SSID,
+                                            EXAMPLE_ESP_WIFI_PASS);
   cfg.ap.channel = EXAMPLE_ESP_WIFI_CHANNEL;
   cfg.ap.max_connection = EXAMPLE_MAX_STA_CONN,
 #ifdef CONFIG_ESP_WIFI_SOFTAP_SAE_SUPPORT
@@ -59,7 +58,7 @@ extern "C" void app_main(void) {
 #endif
   cfg.ap.pmf_cfg.required = true;
   
-  if (std::strlen(EXAMPLE_ESP_WIFI_PASS) == 0) {
+  if (cfg.ap.size() == 0) {
     cfg.ap.authmode = WIFI_AUTH_OPEN;
   }
 

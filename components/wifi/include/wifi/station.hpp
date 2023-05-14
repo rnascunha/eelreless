@@ -11,6 +11,8 @@
 #ifndef COMPONENTS_WIFI_STATION_HPP_
 #define COMPONENTS_WIFI_STATION_HPP_
 
+#include <string_view>
+
 #include "esp_netif.h"
 
 #include "wifi/common.hpp"
@@ -19,6 +21,11 @@ namespace wifi {
 namespace station {
 
 esp_netif_t* config(wifi::config&) noexcept;
+
+[[nodiscard]] wifi::config
+default_init(std::string_view ssid,
+             std::string_view password = "",
+             std::string_view h2e_identifier = "") noexcept;
 
 }   // namespace station
 }   // namespace wifi
