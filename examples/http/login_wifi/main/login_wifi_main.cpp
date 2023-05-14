@@ -75,9 +75,11 @@ extern "C" void app_main() {
   wifi::config config = {};
   std::strcpy((char*)config.sta.ssid, ssid);
   
+  size = 64;
   err = storage.get(NVS_KEY_PASS, ssid, size);
   if (err) {
-    ESP_LOGE(TAG, "Password not configured %d", err.value());
+    ESP_LOGE(TAG, "Password not configured %d/%s",
+                        err.value(), err.message());
     reset_reboot();
     return;
   }

@@ -83,41 +83,48 @@ web_post_handler(httpd_req_t *request) {
   buffer[size] = '\0';
   auto* storage = (sys::nvs*)req.context();
   /**
+   * @brief 
    * 
    */
-  int i = 0;
-  for (; i < 3; ++i) {
-    auto ret = storage->set(NVS_KEY_SSID, ssid.data());
-    if (!ret) break;
-    ESP_LOGW(TAGG, "Error trying set SSID [%d/%s]", ret.value(), ret.message());
-  }
-  if (i == 3) {
-    ESP_LOGE(TAGG, "Couldn't update SSID");
-    req.send("Couldn't update SSID");
-    return ESP_OK;
-  }
-  i = 0;
-  for (; i < 3; ++i) {
-    auto ret = storage->set(NVS_KEY_PASS, pass.data());
-    if (!ret) break;
-    ESP_LOGW(TAGG, "Error trying set PASSWORD [%d/%s]", ret.value(), ret.message());
-  }
-  if (i == 3) {
-    ESP_LOGE(TAGG, "Couldn't update PASSWORD");
-    req.send("Couldn't update PASSWROD");
-    return ESP_OK;
-  }
-  i = 0;
-  for (; i < 3; ++i) {
-    auto ret = storage->commit();
-    if (!ret) break;
-    ESP_LOGW(TAGG, "Error commit [%d/%s]", ret.value(), ret.message());
-  }
-  if (i == 3) {
-    ESP_LOGE(TAGG, "Couldn't commit");
-    req.send("Couldn't COMMIT changes");
-    return ESP_OK;
-  }
+  storage->set(NVS_KEY_SSID, ssid.data());
+  storage->set(NVS_KEY_PASS, pass.data());
+  storage->commit();
+  /**
+   * 
+   */
+  // int i = 0;
+  // for (; i < 3; ++i) {
+  //   auto ret = storage->set(NVS_KEY_SSID, ssid.data());
+  //   if (!ret) break;
+  //   ESP_LOGW(TAGG, "Error trying set SSID [%d/%s]", ret.value(), ret.message());
+  // }
+  // if (i == 3) {
+  //   ESP_LOGE(TAGG, "Couldn't update SSID");
+  //   req.send("Couldn't update SSID");
+  //   return ESP_OK;
+  // }
+  // i = 0;
+  // for (; i < 3; ++i) {
+  //   auto ret = storage->set(NVS_KEY_PASS, pass.data());
+  //   if (!ret) break;
+  //   ESP_LOGW(TAGG, "Error trying set PASSWORD [%d/%s]", ret.value(), ret.message());
+  // }
+  // if (i == 3) {
+  //   ESP_LOGE(TAGG, "Couldn't update PASSWORD");
+  //   req.send("Couldn't update PASSWROD");
+  //   return ESP_OK;
+  // }
+  // i = 0;
+  // for (; i < 3; ++i) {
+  //   auto ret = storage->commit();
+  //   if (!ret) break;
+  //   ESP_LOGW(TAGG, "Error commit [%d/%s]", ret.value(), ret.message());
+  // }
+  // if (i == 3) {
+  //   ESP_LOGE(TAGG, "Couldn't commit");
+  //   req.send("Couldn't COMMIT changes");
+  //   return ESP_OK;
+  // }
   /**
    * 
    */
