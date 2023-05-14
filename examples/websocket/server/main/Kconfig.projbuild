@@ -62,19 +62,4 @@ menu "Example Configuration"
     config ESP_WIFI_AUTH_WAPI_PSK
         bool "WAPI PSK"
   endchoice
-
-  config ENABLE_MDNS
-    bool "Enable local name resolution"
-    default n
-    help
-      Make your device reachable at the local network using a easy 
-      name (instead of a IP).
-
-  config MDNS_HOSTNAME
-    string "Local hostname"
-    default "eelreless"
-    depends on ENABLE_MDNS
-    help
-      Name that the device will be reachable locally (<name>.local)
-
 endmenu

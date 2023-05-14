@@ -21,58 +21,65 @@
 
 #include "esp_http_server.h"
 
+#include "sys/error.hpp"
+
 #include "http/server.hpp"
 #include "http/server_connect_cb.hpp"
 
+#include "detail/type_traits.hpp"
+
 namespace websocket {
 
-template<typename CallData,
-         typename CallOpen = std::nullptr_t>
+template<typename Func>
 static esp_err_t ws_handler(httpd_req_t *req) {
   if (req->method == HTTP_GET) {
-    if constexpr (!std::is_same_v<CallOpen, std::nullptr_t>)
-      return CallOpen{}(req);
+    if constexpr (detail::has_on_open_v<Func>)
+      return Func::on_open(req);
     else
       return ESP_OK;
   }
-  return CallData{}(req);
+  return Func::on_data(req);
 }
 
-template<typename CallClose>
+template<typename Func>
 void event_handler(void* event_handler_arg,
                     esp_event_base_t event_base,
                     std::int32_t event_id,
                     void* event_data) {
-  CallClose{}(*(int*) event_data, event_handler_arg);
+  Func::on_close(*(int*) event_data, event_handler_arg);
 }
 
-template<typename OnClose>
+template<typename Func>
 sys::error
 register_handler(void* user_ctx = nullptr) {
-  http::unregister_handler(HTTP_SERVER_EVENT_DISCONNECTED,
-                         &event_handler<OnClose>);
-  return http::register_handler(HTTP_SERVER_EVENT_DISCONNECTED,
-                                &event_handler<OnClose>,
-                                user_ctx);
+  if constexpr (detail::has_on_close_v<Func>) {
+    http::unregister_handler(HTTP_SERVER_EVENT_DISCONNECTED,
+                          &event_handler<Func>);
+    return http::register_handler(HTTP_SERVER_EVENT_DISCONNECTED,
+                                  &event_handler<Func>,
+                                  user_ctx);
+  } else
+    return ESP_OK;
 }
 
+template<typename Func>
 struct uri {
+  static_assert(detail::has_on_data_v<Func>,
+                  "on_data static method must be defined");
+
   const char* uri = "/";
   void*       user_ctx = nullptr;
   bool        control_frames = false;
   const char* supported_subprotocol = nullptr;
 
-  template<typename OnData,
-           typename OnOpen = std::nullptr_t,
-           typename OnClose = std::nullptr_t>
-  http::server::uri get() noexcept {
-    if constexpr (!std::is_same_v<OnClose, std::nullptr_t>) {
-      register_handler<OnClose>(user_ctx);
+  http::server::uri operator()() noexcept {
+    if constexpr (detail::has_on_close_v<Func>) {
+      register_handler<Func>(user_ctx);
     }
     return http::server::uri{
       .uri          = uri,
       .method       = HTTP_GET,
-      .handler      = ws_handler<OnData, OnOpen>,
+      .handler      = ws_handler<Func>,
       .user_ctx     = user_ctx,
       .is_websocket = true,
       .handle_ws_control_frames = control_frames,
@@ -130,7 +137,6 @@ sys::error
 queue(client&, httpd_work_fn_t, void* = nullptr) noexcept;
 sys::error
 queue(request&, httpd_work_fn_t, void* = nullptr) noexcept;
-
 
 }  // namespace websocket
 

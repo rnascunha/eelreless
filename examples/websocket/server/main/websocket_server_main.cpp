@@ -59,24 +59,20 @@ static void ws_async_send(void *arg) {
     delete client;
 }
 
-struct ws_open {
-  esp_err_t operator()(websocket::request req) {
+struct ws_cb {
+  static sys::error on_open (websocket::request req) {
     ws_client.hd = req.handler();
     ws_client.fd = req.socket();
     ESP_LOGI(TAG, "Handshake done, the new connection was opened %d", ws_client.fd);
     return ESP_OK;
   }
-};
 
-struct ws_close {
-  void operator()(int sock, void*) {
+  static void on_close (int sock, void*) {
     ESP_LOGI(TAG, "Disconnected %d", sock);
     ws_client.hd = nullptr;
   }
-};
 
-struct ws_data {
-  esp_err_t operator()(websocket::request req) {
+  static sys::error on_data(websocket::request req) {
     websocket::data data;
     auto ret = req.receive(data);
     if (ret) {
@@ -129,12 +125,12 @@ extern "C" void app_main() {
   wifi::station::simple_wifi_retry wifi{};
   http::server_connect_cb([](auto& server) {
     server.register_uri(
-      websocket::uri{
+      websocket::uri<ws_cb>{
         .uri            = "/ws",
         .user_ctx       = nullptr,
         .control_frames = false,
         .supported_subprotocol = nullptr
-      }.get<ws_data, ws_open, ws_close>()
+      }()
     );
   });
 
