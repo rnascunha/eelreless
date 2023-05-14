@@ -123,8 +123,6 @@ extern "C" void app_main() {
 
   debouce btn(mcu::gpio((gpio_num_t)CONFIG_PIN_BUTTON, GPIO_MODE_INPUT),
               CONFIG_TIME_HOLD_BUTTON);
-  while (true) {
-    using namespace std::chrono_literals;
-    btn.wait(1s, reset_reboot);
-  };
+  using namespace std::chrono_literals;
+  btn.wait(1s, reset_reboot);
 }

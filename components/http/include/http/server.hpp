@@ -75,6 +75,7 @@ class server {
   };
 
   using config = httpd_config_t;
+
 #if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
   using ssl_config = httpd_ssl_config_t;
 #endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
