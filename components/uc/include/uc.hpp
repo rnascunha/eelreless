@@ -1,5 +1,5 @@
 /**
- * @file mcu.hpp
+ * @file uc.hpp
  * @author Rafael Cunha (rnascunha@gmail.com)
  * @brief 
  * @version 0.1
@@ -10,33 +10,32 @@
  */
 #include <cstdint>
 
+namespace uc {
 
-namespace uC {
-
-enum class ADC_continuous_format {
+enum class adc_stream_format {
   type1 = 0,
   type2,
   type1_2
 };
 
-template<ADC_continuous_format Type>
+template<adc_stream_format Type>
 struct mcu {
   struct ADC {
     struct continuous {
       static constexpr const
-      ADC_continuous_format format = Type;
+      adc_stream_format format = Type;
     };
   };
 };
 
-using esp32 = mcu<ADC_continuous_format::type1>;
-using esp32s2 = mcu<ADC_continuous_format::type1_2>;
-using esp32c3 = mcu<ADC_continuous_format::type2>;
-using esp32h4 = mcu<ADC_continuous_format::type2>;
-using esp32c2 = mcu<ADC_continuous_format::type2>;
-using esp32s3 = mcu<ADC_continuous_format::type2>;
-using esp32c6 = mcu<ADC_continuous_format::type2>;
-using esp32h2 = mcu<ADC_continuous_format::type2>;
+using esp32 = mcu<adc_stream_format::type1>;
+using esp32s2 = mcu<adc_stream_format::type1_2>;
+using esp32c3 = mcu<adc_stream_format::type2>;
+using esp32h4 = mcu<adc_stream_format::type2>;
+using esp32c2 = mcu<adc_stream_format::type2>;
+using esp32s3 = mcu<adc_stream_format::type2>;
+using esp32c6 = mcu<adc_stream_format::type2>;
+using esp32h2 = mcu<adc_stream_format::type2>;
 
 #if CONFIG_IDF_TARGET_ESP32
 using compiled_mcu = esp32;
@@ -57,4 +56,4 @@ using compiled_mcu = esp32c6;
   #error "Unknown MCU"
 #endif
 
-}  // namespace uC
+}  // namespace uc

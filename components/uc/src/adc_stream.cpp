@@ -1,24 +1,36 @@
+/**
+ * @file adc_stream.cpp
+ * @author Rafael Cunha (rnascunha@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-05-15
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include <cassert>
 
 #include "esp_adc/adc_continuous.h"
 
 #include "sys/error.hpp"
 #include "sys/time.hpp"
-#include "adc/continuous.hpp"
 
-namespace uC {
+#include "uc/adc/stream.hpp"
 
-ADC_continuous::ADC_continuous(const config& cfg) noexcept {
+namespace uc {
+namespace adc {
+
+stream::stream(const config& cfg) noexcept {
   init(cfg);
 }
 
 bool
-ADC_continuous::is_initiated() const noexcept {
+stream::is_initiated() const noexcept {
   return handler_ != nullptr;
 }
 
 sys::error
-ADC_continuous::init(const config& cfg) noexcept {
+stream::init(const config& cfg) noexcept {
   assert(handler_ == nullptr && "ADC already initated");
 
   auto ret = adc_continuous_new_handle(&cfg, &handler_);
@@ -27,7 +39,7 @@ ADC_continuous::init(const config& cfg) noexcept {
   return ret;
 }
 
-sys::error ADC_continuous::deinit() noexcept {
+sys::error stream::deinit() noexcept {
   if (handler_ == nullptr)
     return ESP_OK;
   auto ret = adc_continuous_deinit(handler_);
@@ -37,13 +49,13 @@ sys::error ADC_continuous::deinit() noexcept {
 }
 
 sys::error
-ADC_continuous::start() noexcept {
+stream::start() noexcept {
   assert(handler_ != nullptr && "ADC NOT initated");
   return adc_continuous_start(handler_);
 }
 
 sys::error
-ADC_continuous::stop() noexcept {
+stream::stop() noexcept {
   if (handler_ == nullptr)
     return ESP_OK;
 
@@ -51,20 +63,20 @@ ADC_continuous::stop() noexcept {
 }
 
 sys::error
-ADC_continuous::configure(const continuous_config& cfg) noexcept {
+stream::configure(const continuous_config& cfg) noexcept {
   assert(handler_ != nullptr && "ADC NOT initated");
   return adc_continuous_config(handler_, &cfg);
 }
 
 sys::error
-ADC_continuous::register_handler(const callback& cb,
+stream::register_handler(const callback& cb,
                                  void* data /* = nullptr */) noexcept {
   assert(handler_ != nullptr && "ADC NOT initated");
   return adc_continuous_register_event_callbacks(handler_, &cb, data);
 }
 
-ADC_continuous::result
-ADC_continuous::read(data* dt, std::size_t size, sys::time::ticks ticks) noexcept {
+stream::result
+stream::read(data* dt, std::size_t size, sys::time::ticks ticks) noexcept {
   assert(handler_ != nullptr && "ADC NOT initated");
   std::uint32_t num = 0;
   sys::error err = adc_continuous_read(handler_,
@@ -75,8 +87,8 @@ ADC_continuous::read(data* dt, std::size_t size, sys::time::ticks ticks) noexcep
   return {num / sizeof(adc_digi_output_data_t), err};
 }
 
-ADC_continuous::handler
-ADC_continuous::initiate(const config& cfg) noexcept {
+stream::handler
+stream::initiate(const config& cfg) noexcept {
   handler h = nullptr;
   if (adc_continuous_new_handle(&cfg, &h)) {
     h = nullptr;
@@ -84,4 +96,5 @@ ADC_continuous::initiate(const config& cfg) noexcept {
   return h;
 }
 
-}  // namespace uC
+}  // namesapce stream
+}  // namespace uc

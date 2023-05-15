@@ -23,7 +23,7 @@
 #include "sys/sys.hpp"
 #include "sys/time.hpp"
 
-#include "adc/continuous.hpp"
+#include "uc/adc/stream.hpp"
 #include "wave.hpp"
 
 #define EXAMPLE_ADC_UNIT                    ADC_UNIT_1
@@ -41,10 +41,10 @@
 
 #define EXAMPLE_ADC_BUFFER_SIZE             4092
 #define EXAMPLE_READ_LEN_BYTES              1400
-#define EXAMPLE_READ_LEN                    (EXAMPLE_READ_LEN_BYTES / sizeof(uC::ADC_continuous::data))
+#define EXAMPLE_READ_LEN                    (EXAMPLE_READ_LEN_BYTES / sizeof(uc::adc::stream::data))
 
 static constexpr const
-char *TAG = "ADC continuous";
+char *TAG = "wave";
 
 static bool IRAM_ATTR
 conversion_done(adc_continuous_handle_t handle,
@@ -56,7 +56,7 @@ conversion_done(adc_continuous_handle_t handle,
   return (mustYield == pdTRUE);
 }
 
-bool validate_data(uC::ADC_continuous::data* begin,
+bool validate_data(uc::adc::stream::data* begin,
                    std::size_t size) noexcept {
   auto end = begin + size;
   while (begin != end) {
@@ -71,9 +71,9 @@ bool validate_data(uC::ADC_continuous::data* begin,
 static
 double bbout[EXAMPLE_READ_LEN]{};
 
-double process_adc_data(uC::ADC_continuous::data* data,
+double process_adc_data(uc::adc::stream::data* data,
                         std::size_t size) noexcept {
-  using value_type = uC::ADC_continuous::data::value_type;
+  using value_type = uc::adc::stream::data::value_type;
   value_type* begin = &data->raw_data().val;
   value_type* end = begin;
   for (std::size_t i = 0; i < size; ++i)
@@ -99,7 +99,7 @@ void print_array(const std::uint16_t* data, std::size_t size) noexcept {
 }
 
 extern "C" void app_main() {
-  uC::ADC_continuous adc({
+  uc::adc::stream adc({
     .max_store_buf_size = EXAMPLE_ADC_BUFFER_SIZE,
     .conv_frame_size = EXAMPLE_READ_LEN_BYTES,
   });
@@ -109,7 +109,7 @@ extern "C" void app_main() {
     return;
   }
 
-  uC::ADC_continuous::pattern ptt[]{
+  uc::adc::stream::pattern ptt[]{
     {
       .atten      = EXAMPLE_ADC_ATTEN,
       .channel    = ADC_CHANNEL_0 & 0x7,
@@ -136,7 +136,7 @@ extern "C" void app_main() {
     return;
   }
 
-  uC::ADC_continuous::data data[EXAMPLE_READ_LEN]{};
+  uc::adc::stream::data data[EXAMPLE_READ_LEN]{};
 
   while(1) {
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);

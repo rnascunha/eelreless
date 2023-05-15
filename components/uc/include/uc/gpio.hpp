@@ -8,14 +8,14 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#ifndef COMPONENTS_MCU_GPIO_HPP_
-#define COMPONENTS_MCU_GPIO_HPP_
+#ifndef COMPONENTS_UC_GPIO_HPP_
+#define COMPONENTS_UC_GPIO_HPP_
 
 #include "driver/gpio.h"
 
 #include "sys/error.hpp"
 
-namespace mcu {
+namespace uc {
 
 class gpio {
  public:
@@ -34,6 +34,6 @@ class gpio {
   gpio_num_t pin_;
 };
 
-}  // namespace mcu
+}  // namespace uc
 
-#endif  // COMPONENTS_MCU_GPIO_HPP_
+#endif  // COMPONENTS_UC_GPIO_HPP_

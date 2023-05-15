@@ -1,9 +1,9 @@
 #include "driver/gpio.h"
 
 #include "sys/error.hpp"
-#include "gpio.hpp"
+#include "uc/gpio.hpp"
 
-namespace mcu {
+namespace uc {
 
 gpio::gpio(gpio_num_t pin) noexcept
  : pin_{pin} {}
@@ -39,4 +39,4 @@ sys::error gpio::reset() noexcept {
   return gpio_reset_pin(pin_);
 }
 
-}  // namespace mcu
+}  // namespace uc

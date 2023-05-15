@@ -1,6 +1,6 @@
 #/bin/bash
 
-examples_list=("mcu/adc_continuous"
+examples_list=("uc/adc_stream"
                "wave"
                "websocket/server"
                "wifi/station"

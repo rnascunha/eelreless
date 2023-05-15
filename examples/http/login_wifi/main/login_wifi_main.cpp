@@ -22,7 +22,8 @@
 #include "wifi/station.hpp"
 #include "wifi/simple_wifi_retry.hpp"
 
-#include "gpio.hpp"
+#include "uc/gpio.hpp"
+#include "facility/debounce.hpp"
 
 #include "func.hpp"
 
@@ -114,8 +115,8 @@ extern "C" void app_main() {
   init_mdns();
 #endif  // CONFIG_ENABLE_MDNS == 1
 
-  debouce btn(mcu::gpio((gpio_num_t)CONFIG_PIN_BUTTON, GPIO_MODE_INPUT),
-              CONFIG_TIME_HOLD_BUTTON);
+  facility::debounce btn(uc::gpio((gpio_num_t)CONFIG_PIN_BUTTON, GPIO_MODE_INPUT),
+                         CONFIG_TIME_HOLD_BUTTON);
   using namespace std::chrono_literals;
   btn.wait(1s, reset_reboot);
 }

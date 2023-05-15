@@ -1,5 +1,5 @@
 /**
- * @file adc.hpp
+ * @file stream.hpp
  * @author Rafael Cunha (rnascunha@gmail.com)
  * @brief 
  * @version 0.1
@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#ifndef COMPONENTS_PERIPHERAL_ADC_HPP_
-#define COMPONENTS_PERIPHERAL_ADC_HPP_
+#ifndef COMPONENTS_UC_ADC_STREAM_HPP_
+#define COMPONENTS_UC_ADC_STREAM_HPP_
 
 #include <cstdint>
 #include <utility>
@@ -19,9 +19,10 @@
 #include "sys/error.hpp"
 #include "sys/time.hpp"
 
-namespace uC {
+namespace uc {
+namespace adc {
 
-class ADC_continuous {
+class stream {
  public:
   using handler = adc_continuous_handle_t;
   using config = adc_continuous_handle_cfg_t;
@@ -82,10 +83,10 @@ class ADC_continuous {
     }
   };
 
-  ADC_continuous() noexcept = default;
-  ADC_continuous(const config& cfg) noexcept;
-  ADC_continuous(const ADC_continuous&) noexcept = delete;
-  ADC_continuous(ADC_continuous&& adc) noexcept {
+  stream() noexcept = default;
+  stream(const config& cfg) noexcept;
+  stream(const stream&) noexcept = delete;
+  stream(stream&& adc) noexcept {
     handler_ = adc.handler_;
     adc.handler_ = nullptr;
   }
@@ -112,7 +113,7 @@ class ADC_continuous {
   static handler
   initiate(const config& cfg) noexcept;
 
-  ~ADC_continuous() noexcept {
+  ~stream() noexcept {
     stop();
     deinit();
   }
@@ -120,6 +121,7 @@ class ADC_continuous {
   handler handler_ = nullptr;
 };
 
-}  // namespace uC
+}  // namespace adc
+}  // namespace uc
 
-#endif  // COMPONENTS_PERIPHERAL_ADC_HPP_
+#endif  // COMPONENTS_UC_ADC_STREAM_HPP_
