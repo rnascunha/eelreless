@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#include <cstring>
 #include <chrono>
 
 #include "esp_log.h"
@@ -40,12 +39,11 @@ extern "C" void app_main() {
   /**
    * WiFi configuration/connection
    */
-  wifi::config config = {};
-  std::strcpy((char*)config.sta.ssid, EXAMPLE_ESP_WIFI_SSID);
-  std::strcpy((char*)config.sta.password, EXAMPLE_ESP_WIFI_PASS);
-  std::strcpy((char*)config.sta.sae_h2e_identifier, EXAMPLE_H2E_IDENTIFIER);
-  config.sta.threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD;
-  config.sta.sae_pwe_h2e = ESP_WIFI_SAE_MODE;
+  wifi::config config = wifi::station::build_config(EXAMPLE_ESP_WIFI_SSID,
+                                                    EXAMPLE_ESP_WIFI_PASS)
+                          .sae_h2e_identifier(EXAMPLE_H2E_IDENTIFIER)
+                          .authmode(ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD)
+                          .sae_pwe_h2e(ESP_WIFI_SAE_MODE);
 
   auto* net_handler = wifi::station::config(config);
   if (net_handler == nullptr) {

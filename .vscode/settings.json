@@ -1,6 +1,7 @@
 {
   "files.associations": {
     "*.cpp": "cpp",
+    "*.ipp": "cpp",
     "limits": "cpp",
     "cstdio": "cpp",
     "array": "cpp",

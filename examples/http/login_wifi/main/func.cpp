@@ -8,8 +8,6 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#include <cstring>
-
 #include "lwip/ip4_addr.h"
 
 #include "resources.cpp"
@@ -44,12 +42,10 @@ void init_mdns() noexcept {
 void configure_wifi(sys::nvs& storage) noexcept {
   ESP_LOGI(TAG, "WiFi parameters not configured.");
   
-  wifi::config cfg = {};
-  std::strcpy((char*)cfg.ap.ssid, EXAMPLE_ESP_WIFI_SSID);
-  cfg.ap.channel = EXAMPLE_ESP_WIFI_CHANNEL;
-  cfg.ap.authmode = WIFI_AUTH_OPEN;
-  cfg.ap.max_connection = EXAMPLE_MAX_STA_CONN,
-  cfg.ap.pmf_cfg.required = true;
+  wifi::config cfg = wifi::ap::build_config(EXAMPLE_ESP_WIFI_SSID)
+                                    .channel(EXAMPLE_ESP_WIFI_CHANNEL)
+                                    .max_connection(EXAMPLE_MAX_STA_CONN)
+                                    .pmf_cfg({.capable = false, .required = true});
 
   auto* net = wifi::ap::config(cfg);
   if (net == nullptr) {

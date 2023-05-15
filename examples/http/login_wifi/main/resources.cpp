@@ -1,5 +1,6 @@
 #include <span>
 #include <string_view>
+#include <cstring>
 
 #include <esp_log.h>
 
@@ -14,15 +15,6 @@ static constexpr const char* TAGG = "Resources";
 
 extern const std::uint8_t mini_start[] asm("_binary_mini_html_start");
 extern const std::uint8_t mini_end[]   asm("_binary_mini_html_end");
-
-// static void 
-// print_array(const char* arr, std::size_t size) noexcept {
-//   for (int i = 0; i < size; ++i) {
-//     printf("%c:%d ", *arr, *arr);
-//     ++arr;
-//   }
-//   printf("\n");
-// }
 
 static bool validate_ssid(const std::string_view& ssid) noexcept {
   return ssid.size() >= 2 && ssid.size() <= 32;
@@ -82,52 +74,10 @@ web_post_handler(httpd_req_t *request) {
   buffer[ssid_size] = '\0';
   buffer[size] = '\0';
   auto* storage = (sys::nvs*)req.context();
-  /**
-   * @brief 
-   * 
-   */
+
   storage->set(NVS_KEY_SSID, ssid.data());
   storage->set(NVS_KEY_PASS, pass.data());
   storage->commit();
-  /**
-   * 
-   */
-  // int i = 0;
-  // for (; i < 3; ++i) {
-  //   auto ret = storage->set(NVS_KEY_SSID, ssid.data());
-  //   if (!ret) break;
-  //   ESP_LOGW(TAGG, "Error trying set SSID [%d/%s]", ret.value(), ret.message());
-  // }
-  // if (i == 3) {
-  //   ESP_LOGE(TAGG, "Couldn't update SSID");
-  //   req.send("Couldn't update SSID");
-  //   return ESP_OK;
-  // }
-  // i = 0;
-  // for (; i < 3; ++i) {
-  //   auto ret = storage->set(NVS_KEY_PASS, pass.data());
-  //   if (!ret) break;
-  //   ESP_LOGW(TAGG, "Error trying set PASSWORD [%d/%s]", ret.value(), ret.message());
-  // }
-  // if (i == 3) {
-  //   ESP_LOGE(TAGG, "Couldn't update PASSWORD");
-  //   req.send("Couldn't update PASSWROD");
-  //   return ESP_OK;
-  // }
-  // i = 0;
-  // for (; i < 3; ++i) {
-  //   auto ret = storage->commit();
-  //   if (!ret) break;
-  //   ESP_LOGW(TAGG, "Error commit [%d/%s]", ret.value(), ret.message());
-  // }
-  // if (i == 3) {
-  //   ESP_LOGE(TAGG, "Couldn't commit");
-  //   req.send("Couldn't COMMIT changes");
-  //   return ESP_OK;
-  // }
-  /**
-   * 
-   */
   
   req.send(std::span(std::string_view{"Net configured"}));
   ESP_LOGI(TAGG, "Configured WiFi");

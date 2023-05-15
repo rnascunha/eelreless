@@ -5,4 +5,5 @@
 - [ ] Make strong types ('enum class' macro constants, for example)
 - [x] ~~Make script to compile all tests~~
 - [ ] Create top namespace?
-- [ ] Simplify WiFi station/ap config
+- [x] ~~Simplify WiFi station/ap config~~
+- [ ] Document it;

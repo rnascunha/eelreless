@@ -1,9 +1,4 @@
-// #include "freertos/FreeRTOS.h"
-// #include "freertos/task.h"
 #include "esp_mac.h"
-
-#include <cstring>
-
 #include "esp_log.h"
 
 #include "sys/event.hpp"
@@ -46,19 +41,18 @@ extern "C" void app_main(void) {
     return;
   }
 
-  wifi::config cfg = wifi::ap::default_init(EXAMPLE_ESP_WIFI_SSID,
-                                            EXAMPLE_ESP_WIFI_PASS);
-  cfg.ap.channel = EXAMPLE_ESP_WIFI_CHANNEL;
-  cfg.ap.max_connection = EXAMPLE_MAX_STA_CONN,
+  wifi::config cfg = wifi::ap::build_config(EXAMPLE_ESP_WIFI_SSID,
+                                            EXAMPLE_ESP_WIFI_PASS)
+                      .channel(EXAMPLE_ESP_WIFI_CHANNEL)
+                      .max_connection(EXAMPLE_MAX_STA_CONN)
 #ifdef CONFIG_ESP_WIFI_SOFTAP_SAE_SUPPORT
-  cfg.ap.authmode = WIFI_AUTH_WPA3_PSK,
-  cfg.ap.sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
+                      .authmode(WIFI_AUTH_WPA3_PSK)
+                      .sae_pwe_h2e(WPA3_SAE_PWE_BOTH);
 #else /* CONFIG_ESP_WIFI_SOFTAP_SAE_SUPPORT */
-  cfg.ap.authmode = WIFI_AUTH_WPA2_PSK,
+                      .authmode(WIFI_AUTH_WPA2_PSK);
 #endif
-  cfg.ap.pmf_cfg.required = true;
   
-  if (cfg.ap.size() == 0) {
+  if (cfg.ap.password[0] == '\0') {
     cfg.ap.authmode = WIFI_AUTH_OPEN;
   }
 

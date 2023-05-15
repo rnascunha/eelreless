@@ -8,11 +8,8 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#include <cstring>
 #include <chrono>
 #include <inttypes.h>
-
-// #include "sdkconfig.h"
 
 #include "esp_log.h"
 
@@ -28,10 +25,6 @@
 #include "gpio.hpp"
 
 #include "func.hpp"
-
-#if CONFIG_ENABLE_MDNS == 1
-#include "mdns.h"
-#endif  // CONFIG_ENABLE_MDNS == 1
 
 #include "wifi_args.hpp"
 
@@ -72,9 +65,7 @@ extern "C" void app_main() {
   /**
    * WiFi configuration/connection
    */
-  wifi::config config = {};
-  std::strcpy((char*)config.sta.ssid, ssid);
-  
+  wifi::station::build_config builder({ssid, size});
   size = 64;
   err = storage.get(NVS_KEY_PASS, ssid, size);
   if (err) {
@@ -83,11 +74,11 @@ extern "C" void app_main() {
     reset_reboot();
     return;
   }
-  std::strcpy((char*)config.sta.password, ssid);
-  
-  std::strcpy((char*)config.sta.sae_h2e_identifier, EXAMPLE_H2E_IDENTIFIER);
-  config.sta.threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD;
-  config.sta.sae_pwe_h2e = ESP_WIFI_SAE_MODE;
+  wifi::config config = builder
+                          .password({ssid, size})
+                          .sae_h2e_identifier(EXAMPLE_H2E_IDENTIFIER)
+                          .authmode(ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD)
+                          .sae_pwe_h2e(ESP_WIFI_SAE_MODE);
 
   auto* net_handler = wifi::station::config(config);
   if (net_handler == nullptr) {

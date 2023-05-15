@@ -43,17 +43,5 @@ esp_netif_t* config(wifi::config& wifi_config) noexcept {
   return net;
 }
 
-[[nodiscard]] wifi::config
-default_init(std::string_view ssid,
-             std::string_view password /* = "" */,
-             std::string_view h2e_identifier /* = "" */) noexcept {
-  wifi::config config = {};
-  std::strncpy((char*)config.sta.ssid, ssid.data(), ssid.size());
-  std::strncpy((char*)config.sta.password, password.data(), password.size());
-  std::strncpy((char*)config.sta.sae_h2e_identifier, h2e_identifier.data(), h2e_identifier.size());
-
-  return config;
-}
-
 }   // namespace station
 }   // namespace wifi
