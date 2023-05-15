@@ -8,8 +8,6 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#include "lwip/ip4_addr.h"
-
 #include "resources.cpp"
 
 #include "sys/error.hpp"
@@ -19,6 +17,8 @@
 #include "wifi/ap.hpp"
 
 #include "http/server.hpp"
+
+#include "facility/ip4.hpp"
 
 static constexpr const char* TAG = "Main Func";
 
@@ -53,11 +53,12 @@ void configure_wifi(sys::nvs& storage) noexcept {
     return;
   }
 
-  esp_netif_ip_info_t ip;
-  IP4_ADDR(&ip.ip, 192, 168, 2, 1);
-	IP4_ADDR(&ip.gw, 192, 168, 2, 1);
-	IP4_ADDR(&ip.netmask, 255, 255, 255, 0);
-	wifi::ap::ip(net, ip);
+  using namespace facility::literals;
+	wifi::ap::ip(net, {
+    .ip = "192.168.2.1"_ip4,
+    .netmask = "255.255.255.0"_ip4,
+    .gw = "192.168.2.1"_ip4
+  });
 
   sys::error err = wifi::start();
   if (err) {

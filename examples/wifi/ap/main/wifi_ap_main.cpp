@@ -8,7 +8,7 @@
 #include "wifi/ap.hpp"
 
 #if CONFIG_FIXE_AP_IP == 1
-#include "lwip/ip4_addr.h"
+#include "facility/ip4.hpp"
 #endif  // CONFIG_FIXE_AP_IP == 1
 
 #define EXAMPLE_ESP_WIFI_SSID      CONFIG_ESP_WIFI_SSID
@@ -63,11 +63,12 @@ extern "C" void app_main(void) {
   }
 
 #if CONFIG_FIXE_AP_IP == 1
-  esp_netif_ip_info_t ip;
-  IP4_ADDR(&ip.ip, 192, 168, 2, 1);
-	IP4_ADDR(&ip.gw, 192, 168, 2, 1);
-	IP4_ADDR(&ip.netmask, 255, 255, 255, 0);
-	wifi::ap::ip(net, ip);
+  using namespace facility::literals;
+	wifi::ap::ip(net, {
+    .ip = "192.168.2.1"_ip4,
+    .netmask = "255.255.255.0"_ip4,
+    .gw = "192.168.2.1"_ip4
+  });
 #endif  // CONFIG_FIXE_AP_IP == 1
 
   wifi::register_handler(ESP_EVENT_ANY_ID, &wifi_event_handler);
