@@ -10,9 +10,8 @@
  */
 #include <cstring>
 #include <chrono>
-#include <inttypes.h>
 
-#include "esp_log.h"
+#include "lg/log.hpp"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -42,7 +41,7 @@
 #define EXAMPLE_READ_LEN                    (EXAMPLE_READ_LEN_BYTES / sizeof(uc::adc::stream::data))
 
 static constexpr const
-char *TAG = "ADC stream";
+lg::log ll{"ADC stream"};
 
 static bool IRAM_ATTR
 conversion_done(adc_continuous_handle_t handle,
@@ -61,7 +60,7 @@ extern "C" void app_main() {
   });
   
   if (!adc.is_initiated()) {
-    ESP_LOGE(TAG, "Error intiating ADC continuous");
+    ll.error("Error intiating ADC continuous");
     return;
   }
 
@@ -93,7 +92,7 @@ extern "C" void app_main() {
   }, xTaskGetCurrentTaskHandle());
   
   if (adc.start()) {
-    ESP_LOGE(TAG, "Error starting ADC continuous");
+    ll.error("Error starting ADC continuous");
     return;
   }
 
@@ -105,18 +104,16 @@ extern "C" void app_main() {
     while (1) {
       auto result = adc.read(data, EXAMPLE_READ_LEN, 0);
       if (result) {
-        ESP_LOGI(TAG, "%" PRIu32 " new samples collected", result.readed);
+        ll.info("{} new samples collected", result.readed);
         for (int i = 0; i < result.readed; ++i) {
-          //cast below are just to make the printf portable to other mCU
           if (data[i].is_valid(EXAMPLE_ADC_UNIT)) {
-            printf("%" PRIu32 ":%" PRIu32 ", ",
-                  (std::uint32_t)data[i].channel(), (std::uint32_t)data[i].value());
+            ll.info("{}:{}, ", data[i].channel(), data[i].value());
           } else {
-              ESP_LOGW(TAG, "Invalid data [" EXAMPLE_ADC_UNIT_STR(EXAMPLE_ADC_UNIT) "_%" PRIu32 "_%" PRIx32 "]",
-                       (std::uint32_t)data[i].channel(), (std::uint32_t)data[i].value());
+              ll.warn("Invalid data [" EXAMPLE_ADC_UNIT_STR(EXAMPLE_ADC_UNIT) "_{}_{}]",
+                       data[i].channel(), data[i].value());
           }
         }
-        printf("\n");
+        fmt::print("\n");
         using namespace std::chrono_literals;
         sys::delay(500ms); // Need for watchdog
       } else if (result.error == ESP_ERR_TIMEOUT) {

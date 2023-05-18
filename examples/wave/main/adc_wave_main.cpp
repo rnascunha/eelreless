@@ -10,10 +10,9 @@
  */
 #include <cstring>
 #include <chrono>
-#include <inttypes.h>
 #include <algorithm>
 
-#include "esp_log.h"
+#include "lg/log.hpp"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -44,7 +43,7 @@
 #define EXAMPLE_READ_LEN                    (EXAMPLE_READ_LEN_BYTES / sizeof(uc::adc::stream::data))
 
 static constexpr const
-char *TAG = "wave";
+lg::log ll{"wave"};
 
 static bool IRAM_ATTR
 conversion_done(adc_continuous_handle_t handle,
@@ -90,14 +89,6 @@ double process_adc_data(uc::adc::stream::data* data,
   return wave::rms_sine(bout, eout);
 }
 
-void print_array(const std::uint16_t* data, std::size_t size) noexcept {
-  printf("[%u] ", size);
-  auto end = data + size;
-  while (data != end)
-    printf("%u, ", *data++);
-  printf("\n");
-}
-
 extern "C" void app_main() {
   uc::adc::stream adc({
     .max_store_buf_size = EXAMPLE_ADC_BUFFER_SIZE,
@@ -105,7 +96,7 @@ extern "C" void app_main() {
   });
   
   if (!adc.is_initiated()) {
-    ESP_LOGE(TAG, "Error intiating ADC continuous");
+    ll.error("Error intiating ADC continuous");
     return;
   }
 
@@ -132,7 +123,7 @@ extern "C" void app_main() {
   }, xTaskGetCurrentTaskHandle());
   
   if (adc.start()) {
-    ESP_LOGE(TAG, "Error starting ADC continuous");
+    ll.error("Error starting ADC continuous");
     return;
   }
 
@@ -144,13 +135,12 @@ extern "C" void app_main() {
     while (1) {
       auto result = adc.read(data, EXAMPLE_READ_LEN, 0);
       if (result) {
-        ESP_LOGI(TAG, "%" PRIu32 " new samples collected", result.readed);
+        ll.info("{} new samples collected", result.readed);
         if (!validate_data(data, result.readed)) {
-          ESP_LOGW(TAG, "Invalid data received");  
+          ll.warn("Invalid data received");
         } else {
-          ESP_LOGI(TAG, "Irms = %f",
+          ll.info("Irms = {}",
                    process_adc_data(data, result.readed));
-          // print_array(&data[0].raw_data().val, result.readed);
         }
         using namespace std::chrono_literals;
         sys::delay(1s); // Need for watchdog

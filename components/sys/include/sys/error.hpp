@@ -63,4 +63,50 @@ operator!=(const error& err0, esp_err_t err1) noexcept {
 
 }  // namespace sys
 
+#include "fmt/core.h"
+
+template <>
+struct fmt::formatter<sys::error> {
+  bool value = true;
+  bool message = false;
+
+  constexpr auto
+  parse(fmt::format_parse_context& ctx) -> fmt::format_parse_context::iterator {
+    auto it = ctx.begin(), end = ctx.end();
+    if (it == end) {
+      return it;
+    }
+
+    value = false;
+    while (it != end) {
+      switch(*it) {
+        case 'v':
+          value = true;
+          break;
+        case 'm':
+          message = true;
+          break;
+        case 'b':
+          value = true;
+          message = true;
+          break;
+        default:
+          // ctx.on_error("invalid format");
+          return it;  
+      }
+      ++it;
+    }  
+    return it;
+  }
+ 
+  auto format(const sys::error& err,
+              fmt::format_context& ctx) const -> fmt::format_context::iterator{
+    if (value && message)
+      return fmt::format_to(ctx.out(), "{}:{}", err.value(), err.message());
+    else if (value)
+      return fmt::format_to(ctx.out(), "{}", err.value());
+    return fmt::format_to(ctx.out(), "{}", err.message());
+  }
+};
+
 #endif  // COMPONENTS_SYS_ERROR_HPP_

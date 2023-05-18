@@ -9,9 +9,9 @@
  * 
  */
 #include <chrono>
-#include <inttypes.h>
 
-#include "esp_log.h"
+#include "lg/log.hpp"
+#include "lg/format_types.hpp"
 
 #include "sys/error.hpp"
 #include "sys/sys.hpp"
@@ -30,19 +30,19 @@
 #include "wifi_args.hpp"
 
 static constexpr const
-char *TAG = "LoginWifi";
+lg::log ll{"LoginWifi"};
 
 extern "C" void app_main() {
   auto err = sys::default_net_init();
   if (err) {
-    ESP_LOGE(TAG, "Erro initializing chip [%d]", err.value());
+    ll.error("Erro initializing chip [{:b}]", err);
     return;
   }
 
   sys::nvs storage;
   err = storage.open(NVS_NAMESPACE);
   if (err) {
-    ESP_LOGE(TAG, "Error initiating NVS storage");
+    ll.error("Error initiating NVS storage");
     return;
   }
 
@@ -50,7 +50,7 @@ extern "C" void app_main() {
     storage.erase(NVS_KEY_SSID);
     storage.erase(NVS_KEY_PASS);
     storage.commit();
-    ESP_LOGI(TAG, "Erased NVS SSID and PASSWORD. Rebooting...");
+    ll.info("Erased NVS SSID and PASSWORD. Rebooting...");
     sys::reboot();
   };
 
@@ -58,7 +58,7 @@ extern "C" void app_main() {
   std::size_t size = 64;
   err = storage.get(NVS_KEY_SSID, ssid, size);
   if (err) {
-    ESP_LOGI(TAG, "SSID not found %d/%s", err.value(), err.message());
+    ll.info("SSID not found {:b}", err);
     configure_wifi(storage);
     return;
   }
@@ -70,8 +70,7 @@ extern "C" void app_main() {
   size = 64;
   err = storage.get(NVS_KEY_PASS, ssid, size);
   if (err) {
-    ESP_LOGE(TAG, "Password not configured %d/%s",
-                        err.value(), err.message());
+    ll.error("Password not configured {:b}", err);
     reset_reboot();
     return;
   }
@@ -83,7 +82,7 @@ extern "C" void app_main() {
 
   auto* net_handler = wifi::station::config(config);
   if (net_handler == nullptr) {
-    ESP_LOGE(TAG,  "Configure WiFi error");
+    ll.error("Configure WiFi error");
     sys::reboot();
     return;
   }
@@ -91,25 +90,24 @@ extern "C" void app_main() {
   wifi::station::simple_wifi_retry retry{EXAMPLE_ESP_MAXIMUM_RETRY};
   err = wifi::start();
   if (err) {
-    ESP_LOGE(TAG, "Connect WiFi error %d", err.value());
+    ll.error("Connect WiFi error {:b}", err);
     sys::reboot();
     return;
   }
 
-  ESP_LOGI(TAG, "WiFi connecting to SSID:%s password:%s",
-                 config.sta.ssid, config.sta.password);
+  ll.info("WiFi connecting to SSID:{} password:{}",
+                 (const char*)config.sta.ssid, (const char*)config.sta.password);
 
   retry.wait();
 
   if (retry.failed()) {
-    ESP_LOGW(TAG, "Failed to connect to SSID:%s password:%s. Reseting parameters and rebooting",
-                 config.sta.ssid, config.sta.password);
+    ll.warn("Failed to connect to SSID:{} password:{}. Reseting parameters and rebooting",
+                 (const char*)config.sta.ssid, (const char*)config.sta.password);
     reset_reboot();
     return;
   }
 
-  auto ip_info = wifi::ip(net_handler);
-  ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
+  ll.info("Connected! IP: {}", wifi::ip(net_handler).ip);
 
 #if CONFIG_ENABLE_MDNS == 1
   init_mdns();

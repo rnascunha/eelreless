@@ -1,10 +1,11 @@
 #include <algorithm>
 
-#include "esp_log.h"
-#include "esp_err.h"
+#include "sys/error.hpp"
+#include "lg/log.hpp"
 #include "esp_http_server.h"
 
-static constexpr const char* TAGG = "Resources";
+static constexpr const
+lg::log lr{"Resources"};
 
 /* An HTTP GET handler */
 static esp_err_t hello_get_handler(httpd_req_t *req)
@@ -19,7 +20,7 @@ static esp_err_t hello_get_handler(httpd_req_t *req)
     buf = (char*)malloc(buf_len);
     /* Copy null terminated value string into buffer */
     if (httpd_req_get_hdr_value_str(req, "Host", buf, buf_len) == ESP_OK) {
-      ESP_LOGI(TAGG, "Found header => Host: %s", buf);
+      lr.info("Found header => Host: {}", buf);
     }
     free(buf);
   }
@@ -35,7 +36,7 @@ static esp_err_t hello_get_handler(httpd_req_t *req)
 /* An HTTP POST handler */
 static esp_err_t echo_post_handler(httpd_req_t *req)
 {
-  ESP_LOGI(TAGG, "Echo handler");
+  lr.info("Echo handler");
   char buf[100];
   int ret, remaining = req->content_len;
 
@@ -54,10 +55,9 @@ static esp_err_t echo_post_handler(httpd_req_t *req)
     httpd_resp_send_chunk(req, buf, ret);
     remaining -= ret;
 
-    /* Log data received */
-    ESP_LOGI(TAGG, "=========== RECEIVED DATA ==========");
-    ESP_LOGI(TAGG, "%.*s", ret, buf);
-    ESP_LOGI(TAGG, "====================================");
+    lr.info("=========== RECEIVED DATA ==========");
+    lr.info("{}", std::string_view(buf, ret));
+    lr.info("====================================");
   }
 
   // End response

@@ -10,7 +10,8 @@
  */
 #include <chrono>
 
-#include "esp_log.h"
+#include "lg/log.hpp"
+#include "lg/format_types.hpp"
 
 #include "sys/error.hpp"
 #include "sys/sys.hpp"
@@ -23,12 +24,12 @@
 #include "wifi_args.hpp"
 
 static constexpr const
-char *TAG = "WiFi Station";
+lg::log ll{"WiFi Station"};
 
 extern "C" void app_main() {
   auto err = sys::default_net_init();
   if (err) {
-    ESP_LOGE(TAG, "Erro initializing chip [%d]", err.value());
+    ll.error("Erro initializing chip [{:b}]", err);
     return;
   }
 
@@ -43,30 +44,29 @@ extern "C" void app_main() {
 
   auto* net_handler = wifi::station::config(config);
   if (net_handler == nullptr) {
-    ESP_LOGE(TAG,  "Configure WiFi error");
+    ll.error("Configure WiFi error");
     return;
   }
 
   wifi::station::simple_wifi_retry retry{EXAMPLE_ESP_MAXIMUM_RETRY};
   err = wifi::start();
   if (err) {
-    ESP_LOGE(TAG, "Connect WiFi error %d", err.value());
+    ll.error("Connect WiFi error [{:b}]", err);
     return;
   }
 
-  ESP_LOGI(TAG, "WiFi connecting to SSID:%s password:%s",
+  ll.info("WiFi connecting to SSID:{} password:{}",
                  EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
 
   retry.wait();
 
   if (retry.is_connected()) {
-    auto ip_info = wifi::ip(net_handler);
-    ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
+    ll.info("Connected! IP: {}", wifi::ip(net_handler).ip);
   } else if (retry.failed()) {
-    ESP_LOGI(TAG, "Failed");
+    ll.warn("Failed");
     return;
   } else {
-    ESP_LOGI(TAG, "Unexpected event");
+    ll.warn("Unexpected event");
     return;
   }
 

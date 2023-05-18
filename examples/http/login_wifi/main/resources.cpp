@@ -2,7 +2,7 @@
 #include <string_view>
 #include <cstring>
 
-#include <esp_log.h>
+#include "lg/log.hpp"
 
 #include "sys/sys.hpp"
 #include "sys/nvs.hpp"
@@ -11,7 +11,8 @@
 
 #include "func.hpp"
 
-static constexpr const char* TAGG = "Resources";
+static constexpr const
+lg::log lr{"Resources"};
 
 extern const std::uint8_t mini_start[] asm("_binary_mini_html_start");
 extern const std::uint8_t mini_end[]   asm("_binary_mini_html_end");
@@ -34,17 +35,14 @@ web_get_handler(httpd_req_t *req) {
 
 static esp_err_t
 web_post_handler(httpd_req_t *request) {
-  ESP_LOGI(TAGG, "Post web");
   char buffer[100];
   http::server::request req{request};
   int size = req.receive(std::span{buffer});
   if (size < 0) {
-    ESP_LOGW(TAGG, "Erro received data %d", size);
+    lr.warn("Erro received data {}", size);
     req.send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "Rcv Error");
     return ESP_FAIL;
   }
-  // ESP_LOGI(TAGG, "Received[%d]: %.*s", size, size, buffer);
-  // print_array(buffer, size);
 
   // Processing data
   auto* sep = (const char*)std::memchr(buffer, '?', size);
@@ -56,23 +54,22 @@ web_post_handler(httpd_req_t *request) {
   auto ssid_size = sep - buffer;
   std::string_view ssid(buffer, ssid_size);
   if (!validate_ssid(ssid)) {
-    ESP_LOGW(TAGG, "Invalid SSID");
+    lr.warn("Invalid SSID");
     req.send("Invalid SSID");
     return ESP_OK;
   }
 
   std::string_view pass(sep + 1, size - ssid_size - 1);
   if (!validate_password(pass)) {
-    ESP_LOGW(TAGG, "Invalid password");
+    lr.warn("Invalid password");
     req.send("Invalid password");
     return ESP_OK;
   }
 
-  ESP_LOGI(TAGG, "SSID:%.*s, PASS:%.*s",
-           ssid.size(), ssid.data(), pass.size(), pass.data());
-
   buffer[ssid_size] = '\0';
   buffer[size] = '\0';
+  lr.info("SSID:{}, PASS:{}",
+           ssid.data(), pass.data());
   auto* storage = (sys::nvs*)req.context();
 
   storage->set(NVS_KEY_SSID, ssid.data());
@@ -80,7 +77,7 @@ web_post_handler(httpd_req_t *request) {
   storage->commit();
   
   req.send(std::span(std::string_view{"Net configured"}));
-  ESP_LOGI(TAGG, "Configured WiFi");
+  lr.info("Configured WiFi");
 
   return ESP_OK;
 }

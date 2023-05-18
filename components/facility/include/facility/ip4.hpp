@@ -100,4 +100,19 @@ operator ""_ip4(const char* addr, std::size_t size) noexcept {
 
 }  // namespace facility
 
+#include "fmt/core.h"
+
+template <>
+struct fmt::formatter<facility::ip4> {
+  constexpr auto
+  parse(fmt::format_parse_context& ctx) -> fmt::format_parse_context::iterator {
+    return ctx.begin();
+  }
+ 
+  auto format(const facility::ip4& ip,
+              fmt::format_context& ctx) const -> fmt::format_context::iterator{
+    return fmt::format_to(ctx.out(), "{}.{}.{}.{}", ip[0], ip[1], ip[2], ip[3]);
+  }
+};
+
 #endif  // COMPONENTS_FACILITY_IP4_HPP_

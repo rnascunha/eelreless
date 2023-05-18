@@ -1,6 +1,7 @@
 #/bin/bash
 
-examples_list=("uc/adc_stream"
+examples_list=("log"
+               "uc/adc_stream"
                "wave"
                "websocket/server"
                "wifi/station"
@@ -13,6 +14,8 @@ examples_list=("uc/adc_stream"
 # Set redirect
 exec 3> /dev/null
 # exec 3>&1
+
+target=esp32
 
 root=''
 
@@ -112,6 +115,7 @@ clean_build_all() {
   print_table_header
 
   for example in ${examples_list[@]}; do
+    # idf.py set-target -C $examples_root/$example $target >&3
     if [ $1 -eq 1 -o $1 -eq 3 ]; then
       printf_format "|CLEAN| $example"
       clean $example
@@ -139,7 +143,7 @@ clean_build_all() {
   echo "Fail   : " ${fail[@]}
 }
 
-idf.py set-target esp32 >&3
+# idf.py set-target $target >&3
 
 print_header $0 $@
 clean_build_all 3

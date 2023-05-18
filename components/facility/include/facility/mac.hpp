@@ -32,18 +32,25 @@ namespace detail {
 }  // namespace detail
 
 struct mac {
+  // constexpr
+  // mac() = default;
+  // constexpr
+  // mac(const std::uint8_t* mac)
+  //  : f{mac[0], mac[1], mac[2],
+  //      mac[3], mac[4], mac[5]} {}
+
   std::uint8_t f[6]{};
 
   constexpr
   std::uint8_t& operator[](int i) noexcept {
-      assert(i >= 0 && i <= 5 && "Out of bound");
-      return f[i];
+    assert(i >= 0 && i <= 5 && "Out of bound");
+    return f[i];
   }
 
   constexpr
   std::uint8_t operator[](int i) const noexcept {
-      assert(i >= 0 && i <= 5 && "Out of bound");
-      return f[i];
+    assert(i >= 0 && i <= 5 && "Out of bound");
+    return f[i];
   }
 };
 
@@ -88,12 +95,43 @@ constexpr mac
 operator ""_mac(const char* addr, std::size_t size) noexcept {
     auto mac = to_mac({addr, size});
     if (!mac)
-        std::abort();
+      std::abort();
     return *mac;
 }
 
 }  // namespace literals
 
 }  // namespace facility
+
+
+#include "fmt/core.h"
+
+template <>
+struct fmt::formatter<facility::mac> {
+  bool uppercase = false;
+
+  constexpr auto
+  parse(fmt::format_parse_context& ctx) -> fmt::format_parse_context::iterator {
+    auto it = ctx.begin();
+    if (it == ctx.end()) {
+      return it;
+    }
+
+    if (*it == 'X')
+      uppercase = true;
+    return ++it;
+  }
+ 
+  auto format(const facility::mac& mac,
+              fmt::format_context& ctx) const -> fmt::format_context::iterator{
+    return uppercase ? 
+              fmt::format_to(ctx.out(), "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+                                          mac[0], mac[1], mac[2],
+                                          mac[3], mac[4], mac[5]) :
+              fmt::format_to(ctx.out(), "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
+                                          mac[0], mac[1], mac[2],
+                                          mac[3], mac[4], mac[5]);
+  }
+};
 
 #endif  // COMPONENTS_FACILITY_MAC_HPP_

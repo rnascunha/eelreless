@@ -68,6 +68,12 @@
     "future": "cpp",
     "iostream": "cpp",
     "mutex": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "*.inc": "cpp",
+    "any": "cpp",
+    "codecvt": "cpp",
+    "iomanip": "cpp",
+    "typeindex": "cpp",
+    "esp_log_private.h": "c"
   }
 }

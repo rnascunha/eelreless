@@ -8,12 +8,13 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <cstdint>
 #include <chrono>
 #include <type_traits>
-#include <inttypes.h>
 #include <string_view>
 
-#include "esp_log.h"
+#include "lg/log.hpp"
+#include "lg/format_types.hpp"
 
 #include "sys/sys.hpp"
 
@@ -26,7 +27,7 @@
 #include "wifi_args.hpp"
 
 static constexpr const
-char *TAG = "WS Server";
+lg::log ll{"WS Server"};
 
 websocket::client ws_client;
 
@@ -36,7 +37,7 @@ static void my_ws_async_send() {
     return;
   websocket::frame pkt{};
   pkt.payload = (std::uint8_t*)data;
-  pkt.len = strlen(data);
+  pkt.len = std::strlen(data);
   pkt.type = HTTPD_WS_TYPE_TEXT;
 
   ws_client.send(pkt);
@@ -50,7 +51,7 @@ static void ws_async_send(void *arg) {
     auto *client = reinterpret_cast<websocket::client*>(arg);
 
     websocket::frame pkt{};
-    pkt.payload = (uint8_t*)data;
+    pkt.payload = (std::uint8_t*)data;
     pkt.len = std::strlen(data);
     pkt.type = HTTPD_WS_TYPE_TEXT;
 
@@ -62,12 +63,12 @@ struct ws_cb {
   static sys::error on_open (websocket::request req) {
     ws_client.hd = req.handler();
     ws_client.fd = req.socket();
-    ESP_LOGI(TAG, "Handshake done, the new connection was opened %d", ws_client.fd);
+    ll.info("Handshake done, the new connection was opened {}", ws_client.fd);
     return ESP_OK;
   }
 
   static void on_close (int sock, void*) {
-    ESP_LOGI(TAG, "Disconnected %d", sock);
+    ll.info("Disconnected {}", sock);
     ws_client.hd = nullptr;
   }
 
@@ -75,12 +76,12 @@ struct ws_cb {
     websocket::data data;
     auto ret = req.receive(data);
     if (ret) {
-      ESP_LOGI(TAG, "Failed to receive data %d/%s", ret.value(), ret.message());
+      ll.info("Failed to receive data {}", ret);
       return ret;
     }
 
     if (std::string_view((char*)data.packet.payload, data.packet.len) == "Trigger async") {
-      ESP_LOGI(TAG, "Trigger async");
+      ll.info("Trigger async");
       return websocket::queue(req,
                               ws_async_send,
                               (void*)new websocket::client(req));
@@ -88,7 +89,7 @@ struct ws_cb {
 
     ret = req.send(data);
     if (ret)
-      ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret.value());
+      ll.error("httpd_ws_send_frame failed with {}", ret);
     return ret;
   }
 };
@@ -98,7 +99,7 @@ extern "C" void app_main() {
    * Initiate chip
    */
   if (sys::default_net_init()) {
-    ESP_LOGE(TAG, "Error initiating chip");
+    ll.error("Error initiating chip");
     return;
   }
 
@@ -113,7 +114,7 @@ extern "C" void app_main() {
 
   auto* net_handler = wifi::station::config(config);
   if (net_handler == nullptr) {
-    ESP_LOGE(TAG,  "Configure WiFi error");
+    ll.error("Configure WiFi error");
     return;
   }
 
@@ -133,17 +134,16 @@ extern "C" void app_main() {
   });
 
   if (wifi::start()) {
-    ESP_LOGI(TAG, "Error connecting to network");
+    ll.error("Error connecting to network");
     return;
   }
 
   wifi.wait();
 
   if (wifi.is_connected()) {
-    auto ip_info = wifi::ip(net_handler);
-    ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
+    ll.info("Connected! IP: {}", wifi::ip(net_handler).ip);
   } else {
-    ESP_LOGI(TAG, "Failed");
+    ll.info("Failed");
     return;
   }
 

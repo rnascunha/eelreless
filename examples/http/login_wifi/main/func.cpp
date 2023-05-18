@@ -13,6 +13,8 @@
 #include "sys/error.hpp"
 #include "sys/sys.hpp"
 
+#include "lg/log.hpp"
+
 #include "wifi/common.hpp"
 #include "wifi/ap.hpp"
 
@@ -20,7 +22,8 @@
 
 #include "facility/ip4.hpp"
 
-static constexpr const char* TAG = "Main Func";
+static constexpr const
+lg::log ll{"Main Func"};
 
 #define EXAMPLE_ESP_WIFI_SSID      CONFIG_WIFI_AP_SSID
 #define EXAMPLE_ESP_WIFI_CHANNEL   1
@@ -31,16 +34,16 @@ static constexpr const char* TAG = "Main Func";
 
 void init_mdns() noexcept {
   if (mdns_init()) {
-    ESP_LOGW(TAG, "MDNS Init failed");
+    ll.warn("MDNS Init failed");
     return;
   }
   mdns_hostname_set(CONFIG_MDNS_HOSTNAME);
-  ESP_LOGI(TAG, "Hostname: " CONFIG_MDNS_HOSTNAME);
+  ll.info("Hostname " CONFIG_MDNS_HOSTNAME);
 }
 #endif  // CONFIG_ENABLE_MDNS == 1
 
 void configure_wifi(sys::nvs& storage) noexcept {
-  ESP_LOGI(TAG, "WiFi parameters not configured.");
+  ll.info("WiFi parameters not configured.");
   
   wifi::config cfg = wifi::ap::build_config(EXAMPLE_ESP_WIFI_SSID)
                                     .channel(EXAMPLE_ESP_WIFI_CHANNEL)
@@ -49,7 +52,7 @@ void configure_wifi(sys::nvs& storage) noexcept {
 
   auto* net = wifi::ap::config(cfg);
   if (net == nullptr) {
-    ESP_LOGE(TAG, "Erro configuring WiFi AP");
+    ll.error("Erro configuring WiFi AP");
     return;
   }
 
@@ -62,7 +65,7 @@ void configure_wifi(sys::nvs& storage) noexcept {
 
   sys::error err = wifi::start();
   if (err) {
-    ESP_LOGE(TAG, "Erro initiating WiFi AP [%d]", err.value());
+    ll.error("Erro initiating WiFi AP [{:b}]", err);
     return;
   }
 
@@ -70,12 +73,12 @@ void configure_wifi(sys::nvs& storage) noexcept {
   init_mdns();
 #endif  // CONFIG_ENABLE_MDNS == 1
 
-  ESP_LOGI(TAG, "WiFi started. SSID:%s channel:%d",
+  ll.info("WiFi started. SSID:{} channel:{}",
                 EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_CHANNEL);
 
   http::server server(80);
   if (!server.is_connected()) {
-    ESP_LOGE(TAG, "HTTP server not initiated");
+    ll.error("HTTP server not initiated");
     return;
   }
 
