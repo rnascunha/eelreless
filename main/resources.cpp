@@ -11,16 +11,16 @@
 #include <cstdio>
 #include <span>
 
-#include "esp_err.h"
 #include "esp_http_server.h"
 
+#include "sys/error.hpp"
 #include "http/server.hpp"
-#include "adc/continuous.hpp"
+#include "uc/adc/stream.hpp"
 #include "adc.hpp"
 
 static esp_err_t
 current_get_handler(httpd_req_t *request) {
-  uC::ADC_continuous* adc = (uC::ADC_continuous*) request->user_ctx;
+  auto* adc = (uc::adc::stream*) request->user_ctx;
   http::server::request req(request);
 
   req.allow_cors();
@@ -30,7 +30,7 @@ current_get_handler(httpd_req_t *request) {
     return ESP_OK;
   }
 
-  uC::ADC_continuous::data data[EXAMPLE_READ_LEN]{};
+  uc::adc::stream::data data[EXAMPLE_READ_LEN]{};
   using namespace std::chrono_literals;
   auto result = adc->read(data, EXAMPLE_READ_LEN, sys::time::to_ticks(500ms));
   if (result) {

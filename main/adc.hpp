@@ -14,20 +14,20 @@
 #include <optional>
 #include <cstdlib>
 
-#include "adc/continuous.hpp"
+#include "uc/adc/stream.hpp"
 
 #define EXAMPLE_ADC_UNIT                    ADC_UNIT_1
 #define EXAMPLE_ADC_BUFFER_SIZE             4092
 #define EXAMPLE_READ_LEN_BYTES              1400
-#define EXAMPLE_READ_LEN                    (EXAMPLE_READ_LEN_BYTES / sizeof(uC::ADC_continuous::data))
+#define EXAMPLE_READ_LEN                    (EXAMPLE_READ_LEN_BYTES / sizeof(uc::adc::stream::data))
 
-[[nodiscard]] std::optional<uC::ADC_continuous>
+[[nodiscard]] std::optional<uc::adc::stream>
 initiate_adc() noexcept;
 [[nodiscard]] bool
-validate_data(uC::ADC_continuous::data*,
+validate_data(uc::adc::stream::data*,
                     std::size_t) noexcept;
 [[nodiscard]] double
-process_adc_data(uC::ADC_continuous::data*,
+process_adc_data(uc::adc::stream::data*,
                  std::size_t) noexcept;
 
 #endif  // MAIN_ADC_HPP_

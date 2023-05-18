@@ -1,6 +1,16 @@
+/**
+ * @file adc.cpp
+ * @author Rafael Cunha (rnascunha@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-05-18
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include <optional>
 
-#include "adc/continuous.hpp"
+#include "uc/adc/stream.hpp"
 #include "wave.hpp"
 
 #include "adc.hpp"
@@ -15,9 +25,9 @@
 #define EXAMPLE_ADC_OUTPUT_TYPE             ADC_DIGI_OUTPUT_FORMAT_TYPE2
 #endif
 
-[[nodiscard]] std::optional<uC::ADC_continuous>
+[[nodiscard]] std::optional<uc::adc::stream>
 initiate_adc() noexcept {
-  auto adc = std::make_optional<uC::ADC_continuous>(uC::ADC_continuous::config{
+  auto adc = std::make_optional<uc::adc::stream>(uc::adc::stream::config{
     .max_store_buf_size = EXAMPLE_ADC_BUFFER_SIZE,
     .conv_frame_size = EXAMPLE_READ_LEN_BYTES,
   });
@@ -26,7 +36,7 @@ initiate_adc() noexcept {
     return std::nullopt;
   }
 
-  uC::ADC_continuous::pattern ptt[]{
+  uc::adc::stream::pattern ptt[]{
     {
       .atten      = EXAMPLE_ADC_ATTEN,
       .channel    = ADC_CHANNEL_0 & 0x7,
@@ -49,7 +59,7 @@ initiate_adc() noexcept {
 }
 
 [[nodiscard]] 
-bool validate_data(uC::ADC_continuous::data* begin,
+bool validate_data(uc::adc::stream::data* begin,
                     std::size_t size) noexcept {
   auto end = begin + size;
   while (begin != end) {
@@ -65,9 +75,9 @@ static
 double bbout[EXAMPLE_READ_LEN]{};
 
 [[nodiscard]] 
-double process_adc_data(uC::ADC_continuous::data* data,
+double process_adc_data(uc::adc::stream::data* data,
                         std::size_t size) noexcept {
-  using value_type = uC::ADC_continuous::data::value_type;
+  using value_type = uc::adc::stream::data::value_type;
   value_type* begin = &data->raw_data().val;
   value_type* end = begin;
   for (std::size_t i = 0; i < size; ++i)
