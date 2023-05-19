@@ -11,16 +11,56 @@
 #ifndef COMPONENTS_LOG_CORE_HPP_
 #define COMPONENTS_LOG_CORE_HPP_
 
+#include <cstdio>
 #include <cstdint>
 #include <utility>
 #include <string_view>
 
-#include "fmt/core.h"
+#include "fmt/format.h"
+#include "fmt/color.h"
 
-// #include "esp_log_internal.h"
 #include "esp_log.h"
 
 namespace lg {
+
+/**
+ * https://github.com/fmtlib/fmt/issues/1617
+ */
+template <typename T>
+struct basic_print_output_iterator {
+  using value_type = T;
+  using iterator_category = std::output_iterator_tag;
+  using difference_type = void;
+  using pointer = void;
+  using reference = void;
+  using _Unchecked_type = basic_print_output_iterator; // Mark iterator as checked.
+
+  basic_print_output_iterator& operator*() { return *this; }
+  basic_print_output_iterator& operator++() { return *this; }
+  basic_print_output_iterator& operator++(int) { return *this; }
+  basic_print_output_iterator& operator=(const T& value) {
+    std::fputc(value, stdout);
+    return *this;
+  }
+};
+
+using print_output_iterator = basic_print_output_iterator<char>;
+
+template <typename... Args>
+constexpr auto
+print(fmt::format_string<Args...> fmt, Args&&... args) {
+  return fmt::format_to(
+            print_output_iterator{},
+            fmt, std::forward<Args>(args)...);
+}
+
+template <typename S, typename... Args>
+constexpr auto
+print(const fmt::text_style& ts,  S& fmt, Args&&... args) {
+  return fmt::format_to(
+            print_output_iterator{},
+            ts, fmt, std::forward<Args>(args)...);
+}
 
 struct timestamp {
   static
@@ -43,7 +83,8 @@ struct early_timestamp {
   }
 };
 
-static constexpr const char* end_color = "" LOG_RESET_COLOR;
+static constexpr const
+char* end_color = "" LOG_RESET_COLOR;
 
 template<bool BreakLine = true,
          bool UseColor = CONFIG_LOG_COLORS,
@@ -62,27 +103,21 @@ template<typename Level,
          typename Config = default_config,
          typename ...T>
 constexpr void
-print(std::string_view tag,
+out(std::string_view tag,
       fmt::format_string<T...> fmt,
       T&& ...args) {
   if constexpr (Config::force || Level::level <= LOG_LOCAL_LEVEL) {
-    // if (!esp_log_impl_lock_timeout())
-    //   return;
-    // esp_log_level_t level_for_tag = s_log_level_get_and_unlock(tag);
-    // if (!should_output(Level::level, level_for_tag))
-    //   return;
-
     if constexpr (Config::color)
-      fmt::print("{}", Level::color);
-    fmt::print("{} ({}) {}:",
+      lg::print("{}", Level::color);
+    lg::print("{} ({}) {}:",
               Level::letter,
               Config::time::time(),
               tag);
-    fmt::print(fmt,
+    lg::print(fmt,
               std::forward<T>(args)...);
-    fmt::print("{}", end_color);
+    lg::print("{}", end_color);
     if constexpr (Config::break_line)
-      fmt::print("\n");
+      lg::print("\n");
   }
 }
 
@@ -93,7 +128,7 @@ constexpr void                                \
 name (std::string_view tag,                   \
       fmt::format_string<T...> fmt,           \
       T&& ...args) {                          \
-  print< name ## _level, Config, T...>(       \
+  out< name ## _level, Config, T...>(         \
         tag, fmt, std::forward<T>(args)...);  \
 }
 

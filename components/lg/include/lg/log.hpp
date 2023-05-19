@@ -26,7 +26,9 @@ template<typename Config = config_type,           \
 constexpr void                                    \
 name(fmt::format_string<Ts...> fmt,               \
       Ts&&... args) const {                       \
-  lg::name<Config, Ts...>(tag_,fmt, std::forward<Ts>(args)...);  \
+  lg::name<Config, Ts...>(tag_,                   \
+                          fmt,                    \
+                          std::forward<Ts>(args)...);  \
 } 
 
 template<typename ClassConfig = default_config>

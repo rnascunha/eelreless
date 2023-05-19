@@ -9,7 +9,6 @@
  * 
  */
 #include <string_view>
-#include "fmt/core.h"
 
 #include "lg/level.hpp"
 #include "lg/log.hpp"
@@ -40,14 +39,18 @@ void print_all(const lg::log<Config>& l) {
 
 extern "C" void app_main() {
   auto separator = [](std::string_view title = "") {
-    fmt::print("{:-^40}\n", title);
+    lg::print("{:-^40}\n", title);
   };
+
+  lg::print(fmt::bg(fmt::color::green), "This is bg colored color\n");
+  lg::print(fmt::fg(fmt::color::blue), "This is fg colored color\n");
+  lg::print("This is a local {} colored\n", fmt::styled(42, fmt::emphasis::bold));
 
   separator("Free functions");
   print_all<lg::default_config>();
   separator("No breaking lines");
   print_all<lg::config<false>>();
-  fmt::print("\n");
+  lg::print("\n");
   separator("no color");
   print_all<lg::config<true, false>>();
   separator("system timestamp");

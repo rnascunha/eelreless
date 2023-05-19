@@ -16,6 +16,7 @@
 #include "wifi/common.hpp"
 #include "wifi/ap.hpp"
 
+#include "facility/mac.hpp"
 #if CONFIG_FIXE_AP_IP == 1
 #include "lg/format_types.hpp"
 #include "facility/ip4.hpp"
@@ -36,6 +37,9 @@ wifi_event_handler(void* arg,
                    void* event_data) noexcept {
   if (event_id == WIFI_EVENT_AP_STACONNECTED) {
     wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
+    // auto mac = facility::mac{event->mac[0], event->mac[1], event->mac[2],
+    //                          event->mac[3], event->mac[4], event->mac[5]};
+    // ll.info("station {} join, AID={}", mac, event->aid);
     ll.info("station {:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X} join, AID={}",
             event->mac[0], event->mac[1], event->mac[2],
             event->mac[3], event->mac[4], event->mac[5], 

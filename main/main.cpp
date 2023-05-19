@@ -12,7 +12,14 @@
 #include <chrono>
 #include <thread>
 
+#define MAIN_USE_LG     1
+
+#if MAIN_USE_LG == 1
+#include "lg/log.hpp"
+#include "lg/format_types.hpp"
+#else
 #include "esp_log.h"
+#endif 
 
 #include "sys/sys.hpp"
 
@@ -30,17 +37,30 @@
 
 #include "wifi_args.hpp"
 
+#if MAIN_USE_LG == 1
+static constexpr const
+lg::log ll{"Eelreless"};
+#else
 static constexpr const
 char *TAG = "Eelreless";
+#endif 
 
 #if CONFIG_ENABLE_MDNS
 void init_mdns() noexcept {
   if (mdns_init()) {
-      ESP_LOGW(TAG, "MDNS Init failed");
+#if MAIN_USE_LG == 1
+    ll.warn("MDNS Init failed");
+#else
+    ESP_LOGW(TAG, "MDNS Init failed");
+#endif 
       return;
   }
   mdns_hostname_set(CONFIG_MDNS_HOSTNAME);
-  ESP_LOGI(TAG, "Hostname: " CONFIG_MDNS_HOSTNAME);
+#if MAIN_USE_LG == 1
+    ll.info("Hostname: " CONFIG_MDNS_HOSTNAME);
+#else
+    ESP_LOGI(TAG, "Hostname: " CONFIG_MDNS_HOSTNAME);
+#endif
 }
 #endif
 
@@ -49,7 +69,11 @@ extern "C" void app_main() {
    * Initiate chip
    */
   if (sys::default_net_init()) {
+#if MAIN_USE_LG == 1
+    ll.error("Error initiating chip");
+#else
     ESP_LOGE(TAG, "Error initiating chip");
+#endif
     return;
   }
 
@@ -58,23 +82,29 @@ extern "C" void app_main() {
    */
   auto adc = initiate_adc();
   if (!adc) {
+#if MAIN_USE_LG == 1
+    ll.error("Error initiating ADC");
+#else
     ESP_LOGE(TAG, "Error initiating ADC");
+#endif
     return;
   }
 
   /**
    * WiFi configuration
    */
-  wifi::config config = {};
-  std::strcpy((char*)config.sta.ssid, EXAMPLE_ESP_WIFI_SSID);
-  std::strcpy((char*)config.sta.password, EXAMPLE_ESP_WIFI_PASS);
-  std::strcpy((char*)config.sta.sae_h2e_identifier, EXAMPLE_H2E_IDENTIFIER);
-  config.sta.threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD;
-  config.sta.sae_pwe_h2e = ESP_WIFI_SAE_MODE;
+  wifi::config config = wifi::station::build_config(EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS)
+                                              .sae_h2e_identifier(EXAMPLE_H2E_IDENTIFIER)
+                                              .authmode(ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD)
+                                              .sae_pwe_h2e(ESP_WIFI_SAE_MODE);
 
   auto* net_handler = wifi::station::config(config);
   if (net_handler == nullptr) {
+#if MAIN_USE_LG == 1
+    ll.error("Configure WiFi error");
+#else
     ESP_LOGE(TAG,  "Configure WiFi error");
+#endif
     return;
   }
 
@@ -95,17 +125,29 @@ extern "C" void app_main() {
   });
 
   if (wifi::start()) {
-    ESP_LOGI(TAG, "Error connecting to network");
+#if MAIN_USE_LG == 1
+    ll.error("Error connecting to network");
+#else
+    ESP_LOGE(TAG, "Error connecting to network");
+#endif
     return;
   }
 
   wifi.wait();
 
   if (wifi.is_connected()) {
+#if MAIN_USE_LG == 1
+    ll.info("Connected! IP:{}", wifi::ip(net_handler).ip);
+#else
     auto ip_info = wifi::ip(net_handler);
     ESP_LOGI(TAG, "Connected! IP:" IPSTR, IP2STR(&ip_info.ip));
+#endif
   } else {
-    ESP_LOGI(TAG, "Failed");
+#if MAIN_USE_LG == 1
+    ll.error("Failed");
+#else
+    ESP_LOGE(TAG, "Failed");
+#endif
     return;
   }
 

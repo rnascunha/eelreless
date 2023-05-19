@@ -14,8 +14,8 @@
 #include <cstdint>
 #include <cctype>
 #include <cstdlib>
-#include <cassert>
 
+#include <array>
 #include <string_view>
 #include <optional>
 
@@ -31,28 +31,7 @@ namespace detail {
   }
 }  // namespace detail
 
-struct mac {
-  // constexpr
-  // mac() = default;
-  // constexpr
-  // mac(const std::uint8_t* mac)
-  //  : f{mac[0], mac[1], mac[2],
-  //      mac[3], mac[4], mac[5]} {}
-
-  std::uint8_t f[6]{};
-
-  constexpr
-  std::uint8_t& operator[](int i) noexcept {
-    assert(i >= 0 && i <= 5 && "Out of bound");
-    return f[i];
-  }
-
-  constexpr
-  std::uint8_t operator[](int i) const noexcept {
-    assert(i >= 0 && i <= 5 && "Out of bound");
-    return f[i];
-  }
-};
+using mac = std::array<std::uint8_t, 6>;
 
 [[nodiscard]] constexpr std::optional<mac>
 to_mac(std::string_view addr) {
@@ -104,7 +83,8 @@ operator ""_mac(const char* addr, std::size_t size) noexcept {
 }  // namespace facility
 
 
-#include "fmt/core.h"
+// #include "fmt/core.h"
+#include "lg/core.hpp"
 
 template <>
 struct fmt::formatter<facility::mac> {
@@ -121,9 +101,10 @@ struct fmt::formatter<facility::mac> {
       uppercase = true;
     return ++it;
   }
- 
+  
   auto format(const facility::mac& mac,
-              fmt::format_context& ctx) const -> fmt::format_context::iterator{
+              fmt::format_context& ctx) const -> fmt::format_context::iterator 
+              {
     return uppercase ? 
               fmt::format_to(ctx.out(), "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
                                           mac[0], mac[1], mac[2],

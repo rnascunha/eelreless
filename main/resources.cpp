@@ -10,6 +10,7 @@
  */
 #include <cstdio>
 #include <span>
+// #include "fmt/core.h"
 
 #include "esp_http_server.h"
 
@@ -32,14 +33,16 @@ current_get_handler(httpd_req_t *request) {
 
   uc::adc::stream::data data[EXAMPLE_READ_LEN]{};
   using namespace std::chrono_literals;
-  auto result = adc->read(data, EXAMPLE_READ_LEN, sys::time::to_ticks(500ms));
+  auto result = adc->read(data, EXAMPLE_READ_LEN, 500ms);
   if (result) {
     if (!validate_data(data, result.readed)) {
       req.send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "Error validaint data");
     } else {
       char str[10]{};
-      auto size = std::snprintf(str, 10, "%f", process_adc_data(data, result.readed));
-      req.send(std::span{str, (std::size_t)size});
+      auto ans = fmt::format_to_n(str, 10, "{}", process_adc_data(data, result.readed));
+      req.send(std::span{str, ans.out});
+      // auto size = std::snprintf(str, 10, "%f", process_adc_data(data, result.readed));
+      // req.send(std::span{str, (std::size_t)size});
     }
   } else if (result.error == ESP_ERR_TIMEOUT) {
     req.send_error(HTTPD_500_INTERNAL_SERVER_ERROR, "Error timeout reading");
