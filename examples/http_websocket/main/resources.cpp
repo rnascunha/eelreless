@@ -56,6 +56,33 @@ static esp_err_t echo_post_handler(httpd_req_t *request)
   return ESP_OK;
 }
 
+static esp_err_t query_get_handler(httpd_req_t *request)
+{
+  http::server::request req(request);
+  req.allow_cors();
+
+  lr.info("url: {}", req.uri());
+  http::server::query q(request);
+
+  auto lamb = [&q](const char* key) {
+    lr.info("has {}: {}", key, q.has(key));
+    auto op = q.value(key);
+    if (op) {
+      lr.info("value {} '{}'", key, *op);
+    } else {
+      lr.info("NOT have value '{}'", key);
+    }
+  };
+
+  lamb("test1");
+  lamb("test2");
+  lamb("test3");
+  lamb("test");
+    
+  req.send(req.uri());
+  return ESP_OK;
+}
+
 esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
 {
   http::server::request(req).send_error(HTTPD_404_NOT_FOUND, "Some 404 error message");

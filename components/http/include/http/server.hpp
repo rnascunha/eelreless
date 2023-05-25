@@ -16,6 +16,7 @@
 #include <functional>
 #include <span>
 #include <memory>
+#include <optional>
 
 #include "esp_http_server.h"
 #if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
@@ -50,6 +51,13 @@ class server {
     header_size(const char* field) noexcept;
     std::unique_ptr<char[]>
     header_value(const char* field) noexcept;
+    [[nodiscard]] std::size_t
+    query_size() noexcept;
+    std::unique_ptr<char[]>
+    query() noexcept;
+
+    [[nodiscard]] const char*
+    uri() const noexcept;
 
     /**
      * Response
@@ -94,6 +102,24 @@ class server {
 
    private:
     httpd_req_t* req_;
+  };
+
+  class query {
+   public:
+    query(const char* uri) noexcept;
+    query(const request& req) noexcept;
+
+    operator bool() const noexcept;
+
+    bool has(const char*) const noexcept;
+    std::optional<std::string_view>
+    value(const char*) const noexcept;
+
+    const char* operator()() const noexcept;
+
+   private:
+    const char* end_key(const char*) const noexcept;
+    const char* query_;
   };
 
   using config = httpd_config_t;

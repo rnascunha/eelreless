@@ -108,6 +108,9 @@ server::initiate(ssl_config& cfg) noexcept {
 }
 #endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 
+/**
+ *
+ */
 [[nodiscard]] std::size_t
 server::request::content_length() noexcept {
   return req_->content_len;
@@ -130,6 +133,27 @@ server::request::header_value(const char* field) noexcept {
   return ptr;
 }
 
+[[nodiscard]] std::size_t
+server::request::query_size() noexcept {
+  return httpd_req_get_url_query_len(req_);
+}
+
+std::unique_ptr<char[]>
+server::request::query() noexcept {
+  std::size_t size = query_size();
+  if (size == 0)
+    return std::unique_ptr<char[]>(nullptr);
+
+  std::unique_ptr<char[]> ptr(new char[size + 1]);
+  if (httpd_req_get_url_query_str(req_, ptr.get(), size + 1) != ESP_OK) 
+    return std::unique_ptr<char[]>(nullptr);
+  return ptr;
+}
+
+[[nodiscard]] const char*
+server::request::uri() const noexcept {
+  return req_->uri;
+}
 
 server::request::request(httpd_req_t* req) noexcept
 : req_(req){}
@@ -186,7 +210,73 @@ server::request::native() noexcept {
 server::request::handler() noexcept {
   return req_->handle;
 }
+/**
+ * @brief 
+ * 
+ */
+server::query::query(const char* uri) noexcept
+: query_(uri) {
+  while(*query_ != '\0') {
+    if (*query_++ == '?')
+      break;
+  }
+}
 
+server::query::query(const request& req) noexcept
+: query(req.uri()) {}
+
+server::query::operator bool() const noexcept {
+  return *query_ != '\0';
+}
+
+bool
+server::query::has(const char* key) const noexcept {
+  return end_key(key) != nullptr;
+}
+
+const char*
+server::query::end_key(const char* key) const noexcept {
+  const char* v = query_;
+  while (*v != '\0') {
+    const char* t = key;
+    while (*v != '\0' && *v == *t) {
+      ++v; ++t;
+    }
+    if (*t == '\0' && (*v == '\0' || *v == '=' || *v == '?'))
+      return v;
+    while (*v != '\0') {
+      if (*v++ == '?')
+        break;
+    }
+  }
+  return nullptr;
+}
+
+std::optional<std::string_view>
+server::query::value(const char* key) const noexcept {
+  auto end = end_key(key);
+  if (end == nullptr)
+    return std::nullopt;
+  
+  if (*end == '\0' || *end == '?')
+    return std::string_view{};
+
+  ++end;
+  auto v = end;
+  while (*v != '\0' && *v != '?') {
+    ++v;
+  }
+  return std::string_view(end, v - end);
+}
+
+const char*
+server::query::operator()() const noexcept {
+  return query_;
+}
+
+/**
+ * 
+ */
 sys::error
 register_handler(esp_http_server_event_id_t id,
                  esp_event_handler_t handler,

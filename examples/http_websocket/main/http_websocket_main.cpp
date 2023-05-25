@@ -108,7 +108,16 @@ extern "C" void app_main() {
         .is_websocket = false,
         .handle_ws_control_frames = false,
         .supported_subprotocol = nullptr
-      }, http::server::error{
+      }, http::server::uri{
+        .uri       = "/query",
+        .method    = HTTP_GET,
+        .handler   = query_get_handler,
+        .user_ctx  = nullptr,
+        .is_websocket = false,
+        .handle_ws_control_frames = false,
+        .supported_subprotocol = nullptr
+      },
+      http::server::error{
         .code      = HTTPD_404_NOT_FOUND,
         .handler   = http_404_error_handler
       }

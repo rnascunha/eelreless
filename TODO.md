@@ -8,6 +8,7 @@
 - [ ] Document it;
 - [x] ~~Make FMT library as a dependency.~~
 - [ ] Wrap freeRTOS functions
+- [ ] Wrap http:serve::uri to work better with Websocket
 
 ## Fix
 
