@@ -108,6 +108,29 @@ server::initiate(ssl_config& cfg) noexcept {
 }
 #endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 
+[[nodiscard]] std::size_t
+server::request::content_length() noexcept {
+  return req_->content_len;
+}
+
+std::size_t
+server::request::header_size(const char* field) noexcept {
+  return httpd_req_get_hdr_value_len(req_, field);
+}
+
+std::unique_ptr<char[]>
+server::request::header_value(const char* field) noexcept {
+  std::size_t size = header_size(field);
+  if (size == 0)
+    return std::unique_ptr<char[]>(nullptr);
+
+  std::unique_ptr<char[]> ptr(new char[size + 1]);
+  if (httpd_req_get_hdr_value_str(req_, field, ptr.get(), size + 1) != ESP_OK) 
+    return std::unique_ptr<char[]>(nullptr);
+  return ptr;
+}
+
+
 server::request::request(httpd_req_t* req) noexcept
 : req_(req){}
 
@@ -136,7 +159,12 @@ server::request::send_error(httpd_err_code_t error,
 
 sys::error
 server::request::send(const char* data) noexcept {
-  return httpd_send(req_, data, std::strlen(data));
+  return httpd_resp_send(req_, data, std::strlen(data));
+}
+
+sys::error
+server::request::end_chunk() noexcept {
+  return httpd_resp_send_chunk(req_, nullptr, 0);
 }
 
 [[nodiscard]] void*

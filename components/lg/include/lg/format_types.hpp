@@ -11,7 +11,7 @@
 #ifndef COMPONENTS_LG_FORMAT_TYPES_HPP_
 #define COMPONENTS_LG_FORMAT_TYPES_HPP_
 
-#include "fmt/core.h"
+#include "lg/core.hpp"
 
 #include "esp_netif_types.h"
 
@@ -19,7 +19,7 @@ template <>
 struct fmt::formatter<esp_ip4_addr_t> {
   constexpr auto
   parse(fmt::format_parse_context& ctx) -> fmt::format_parse_context::iterator {
-    return ctx.begin();
+    return ctx.end();
   }
  
   auto format(const esp_ip4_addr_t& ip,

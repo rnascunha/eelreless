@@ -16,6 +16,10 @@
 #include <utility>
 #include <string_view>
 
+#include "esp_system.h"
+
+#define FMT_THROW(x)  esp_system_abort(x.what())
+
 #include "fmt/format.h"
 #include "fmt/color.h"
 

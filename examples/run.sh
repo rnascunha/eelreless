@@ -9,7 +9,8 @@ examples_list=("log"
                "http/server"
                "http/server_cb"
                "http/login_wifi"
-               "http/https_server")
+               "http/https_server"
+               "http_websocket")
 
 # Set redirect
 exec 3> /dev/null

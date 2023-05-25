@@ -63,7 +63,7 @@ operator!=(const error& err0, esp_err_t err1) noexcept {
 
 }  // namespace sys
 
-#include "fmt/core.h"
+#include "lg/core.hpp"
 
 template <>
 struct fmt::formatter<sys::error> {

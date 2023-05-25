@@ -100,7 +100,7 @@ operator ""_ip4(const char* addr, std::size_t size) noexcept {
 
 }  // namespace facility
 
-#include "fmt/core.h"
+#include "lg/core.hpp"
 
 template <>
 struct fmt::formatter<facility::ip4> {

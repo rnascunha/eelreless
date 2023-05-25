@@ -1,3 +1,3 @@
 idf_component_register(SRCS
                     INCLUDE_DIRS "include"
-                    REQUIRES log fmt)
+                    REQUIRES esp_system log fmt)

@@ -6,8 +6,13 @@
 - [ ] Create top namespace?
 - [x] ~~Simplify WiFi station/ap config~~
 - [ ] Document it;
-- [x] Make FMT library as a dependency.
+- [x] ~~Make FMT library as a dependency.~~
 - [ ] Wrap freeRTOS functions
+
+## Fix
+
+- [ ] Websocket closed is been called to any HTTP connection, when used in conjuction to other HTTPs resources
+- [ ] User defined types at lg (log) component not working correctly.
 
 ## Test
 

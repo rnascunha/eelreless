@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <functional>
 #include <span>
+#include <memory>
 
 #include "esp_http_server.h"
 #if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
@@ -40,6 +41,19 @@ class server {
    public:
     request(httpd_req_t* req) noexcept;
 
+    /**
+     * Request
+     */
+    [[nodiscard]] std::size_t
+    content_length() noexcept;
+    [[nodiscard]] std::size_t
+    header_size(const char* field) noexcept;
+    std::unique_ptr<char[]>
+    header_value(const char* field) noexcept;
+
+    /**
+     * Response
+     */
     request&
     header(const char* field, const char* value) noexcept;
     request&
@@ -65,10 +79,18 @@ class server {
     }
 
     template<typename T, std::size_t N>
-    sys::error send(std::span<T, N> data) noexcept {
+    sys::error
+    send(std::span<T, N> data) noexcept {
       return httpd_resp_send(req_, (const char*)data.data(), data.size_bytes());
     }
     sys::error send(const char*) noexcept;
+    template<typename T, std::size_t N>
+    sys::error
+    send_chunk(std::span<T, N> data) noexcept {
+      return httpd_resp_send_chunk(req_, data.data(), data.size_bytes());
+    }
+    sys::error
+    end_chunk() noexcept;
 
    private:
     httpd_req_t* req_;
