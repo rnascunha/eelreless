@@ -17,6 +17,8 @@
 #include "freertos/task.h"
 #include "freertos/portmacro.h"
 
+#include "sys/type_traits.hpp"
+
 namespace sys {
 namespace time {
 
@@ -31,6 +33,14 @@ to_ticks(std::chrono::duration<Rep, Ratio> duration) noexcept {
   auto value = std::chrono::duration_cast<std::chrono::duration<ticks, std::milli>>(duration).count();
   return pdMS_TO_TICKS(value);
 }
+
+[[nodiscard]] constexpr ticks
+to_ticks(ticks duration) noexcept {
+  return duration;
+}
+
+template<typename T>
+concept tick_time = is_duration_v<T> || std::is_same_v<T, sys::time::ticks>;
 
 }  // namespace time
 }  // namespace sys

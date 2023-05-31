@@ -14,6 +14,7 @@
 
 - [ ] Websocket closed is been called to any HTTP connection, when used in conjuction to other HTTPs resources
 - [ ] User defined types at lg (log) component not working correctly.
+- [ ] `uc/serial` not finding `QueueHandle_t` type. Ignoring.
 
 ## Test
 

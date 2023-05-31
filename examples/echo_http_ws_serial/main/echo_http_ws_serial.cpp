@@ -28,6 +28,11 @@
 
 #include "wifi_args.hpp"
 
+#include "uc/serial.hpp"
+
+#define UART_BAUDRATE     115200
+#define UART_BUFFER_SIZE  512
+
 static constexpr const
 lg::log ll{"HTTP WS"};
 
@@ -138,7 +143,21 @@ extern "C" void app_main() {
     return;
   }
 
+  ll.info("Configuring UART...");
+
+  uc::serial serial0(UART_NUM_0, uc::serial::config{UART_BAUDRATE});
+  if (serial0.install_driver(UART_BUFFER_SIZE, UART_BUFFER_SIZE)) {
+    ll.error("Driver installation failed");
+    return;
+  }
+
+  ll.info("Uart Driver installed.");
+  std::uint8_t data[UART_BUFFER_SIZE];
   while (true) {
-    sys::delay(sys::time::max);
+    using namespace std::chrono_literals;
+    int len = serial0.read(std::span(data, UART_BUFFER_SIZE), 100ms);
+    if (len > 0) {
+      serial0.write(std::span(data, len));
+    }
   }
 }

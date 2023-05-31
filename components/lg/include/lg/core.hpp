@@ -90,8 +90,14 @@ struct early_timestamp {
 static constexpr const
 char* end_color = "" LOG_RESET_COLOR;
 
+#ifdef CONFIG_LOG_COLORS
+#define CONFIG_LG_USE_COLOR    true
+#else
+#define CONFIG_LG_USE_COLOR    false
+#endif 
+
 template<bool BreakLine = true,
-         bool UseColor = CONFIG_LOG_COLORS,
+         bool UseColor = CONFIG_LG_USE_COLOR,
          typename TimeFunc = timestamp,
          bool Force    = false>
 struct config {

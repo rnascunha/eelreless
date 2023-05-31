@@ -74,6 +74,7 @@
     "codecvt": "cpp",
     "iomanip": "cpp",
     "typeindex": "cpp",
-    "esp_log_private.h": "c"
+    "esp_log_private.h": "c",
+    "freertos.h": "c"
   }
 }
