@@ -1,3 +1,4 @@
+
 /**
  * @file main.cpp
  * @author Rafael Cunha (rnascunha@gmail.com)
@@ -12,7 +13,7 @@
 #include <chrono>
 #include <thread>
 
-#define MAIN_USE_LG     1
+#define MAIN_USE_LG     0
 
 #if MAIN_USE_LG == 1
 #include "lg/log.hpp"

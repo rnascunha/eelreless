@@ -2,6 +2,8 @@
 
 examples_list=("log"
                "uc/adc_stream"
+               "uc/gpio"
+               "uc/pulse_counter"
                "wave"
                "websocket/server"
                "wifi/station"
@@ -19,10 +21,15 @@ exec 3> /dev/null
 target=esp32
 
 root=''
+do_fullclean=0
 
-if [ $# -ne 1 ]; then
+if [ $# -lt 1 -o $# -gt 2 ]; then
   echo "Root path not defined"
   exit 1
+fi
+
+if [ $# -eq 2 ]; then
+  do_fullclean=$2
 fi
 
 root=$1
@@ -77,6 +84,7 @@ Date: $(now)
 IDF_Version: $(idf.py --version)
 IDF_PATH: ${IDF_PATH}
 Command: $@
+Fullclean: $do_fullclean
 -------------------------------------------------------------------------
 EOF
 }
@@ -106,7 +114,11 @@ build() {
 }
 
 clean() {
-  idf.py clean -C $examples_root/$1 >&3
+  if [ $do_fullclean -ne 1 ]; then
+    idf.py clean -C $examples_root/$1 >&3
+  else
+    idf.py fullclean -C $examples_root/$1 >&3
+  fi
 }
 
 clean_build_all() {
@@ -119,6 +131,7 @@ clean_build_all() {
     # idf.py set-target -C $examples_root/$example $target >&3
     if [ $1 -eq 1 -o $1 -eq 3 ]; then
       printf_format "|CLEAN| $example"
+
       clean $example
       if [ $? -ne 0 ]; then
         echo "  FAILED"

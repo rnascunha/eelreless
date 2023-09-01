@@ -30,6 +30,13 @@ class gpio {
   sys::error write(int) noexcept;
 
   sys::error reset() noexcept;
+
+  // Interrupt functions
+  sys::error add_isr(gpio_int_type_t type, gpio_isr_t cb, void* arg = nullptr) noexcept;
+  sys::error remove_isr() noexcept;
+
+  static sys::error install_isr(int intr_alloc_flags = 0) noexcept;
+  static void unistall_isr() noexcept;
  private:
   gpio_num_t pin_;
 };

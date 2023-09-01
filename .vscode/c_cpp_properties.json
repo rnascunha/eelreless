@@ -12,7 +12,7 @@
             "compilerPath": "/home/rnascunha/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-cc",
             "cStandard": "c17",
             "cppStandard": "c++20",
-            "intelliSenseMode": "linux-clang-x64",
+            "intelliSenseMode": "${default}",
             "forcedInclude": [
                 "${workspaceFolder}/build/config/sdkconfig.h"
             ]

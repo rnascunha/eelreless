@@ -155,9 +155,10 @@ extern "C" void app_main() {
   std::uint8_t data[UART_BUFFER_SIZE];
   while (true) {
     using namespace std::chrono_literals;
-    int len = serial0.read(std::span(data, UART_BUFFER_SIZE), 100ms);
+    int len = serial0.read(std::span(data, UART_BUFFER_SIZE-1), 100ms);
     if (len > 0) {
-      serial0.write(std::span(data, len));
+      data[len] = '\0';
+      serial0.write(std::span(data, len + 1));
     }
   }
 }

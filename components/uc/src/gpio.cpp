@@ -39,4 +39,23 @@ sys::error gpio::reset() noexcept {
   return gpio_reset_pin(pin_);
 }
 
+// Interrupt functions
+sys::error gpio::add_isr(gpio_int_type_t type, gpio_isr_t cb, void* arg /* = nullptr */) noexcept {
+  auto err = gpio_set_intr_type(pin_, type);
+  if (err != ESP_OK) return err;
+  return gpio_isr_handler_add(pin_, cb, arg);
+}
+
+sys::error gpio::remove_isr() noexcept {
+  return gpio_isr_handler_remove(pin_);
+}
+
+sys::error gpio::install_isr(int intr_alloc_flags /* = 0 */) noexcept {
+  return gpio_install_isr_service(intr_alloc_flags);
+}
+
+void gpio::unistall_isr() noexcept {
+  gpio_uninstall_isr_service();
+}
+
 }  // namespace uc

@@ -1,6 +1,5 @@
 ## IDF Component Manager Manifest File
 dependencies:
-  espressif/fmt: "^9.1.0"
   espressif/mdns: "*"
   ## Required IDF version
   idf:
