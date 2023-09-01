@@ -30,7 +30,9 @@ initiate_adc() noexcept {
   auto adc = std::make_optional<uc::adc::stream>(uc::adc::stream::config{
     .max_store_buf_size = EXAMPLE_ADC_BUFFER_SIZE,
     .conv_frame_size = EXAMPLE_READ_LEN_BYTES,
-    .flags = 0
+    .flags {
+      .flush_pool = 0
+    }
   });
   
   if (!adc->is_initiated()) {

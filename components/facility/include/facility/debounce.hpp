@@ -41,14 +41,6 @@ struct debounce {
         call(std::forward<Args>(args)...);
         break;
       }
-      // if (btn_.read() == 0) {
-      //   if (++count_ == limit_) {
-      //     call(std::forward<Args>(args)...);
-      //     break;
-      //   }
-      // } else {
-      //   count_ = 0;
-      // }
       sys::delay(dt);
     }
   }
