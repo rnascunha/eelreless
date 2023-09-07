@@ -129,6 +129,15 @@ struct client {
   sys::error send(frame&) noexcept;
   sys::error send(data&) noexcept;
 
+  bool is_valid() const noexcept {
+    return hd != nullptr;
+  }
+
+  void clear() noexcept {
+    hd = nullptr;
+    fd = 0;  
+  }
+
   httpd_handle_t hd = nullptr;
   int            fd = 0;
 };

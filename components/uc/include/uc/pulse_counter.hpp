@@ -80,10 +80,28 @@ class pulse_counter {
 
   sys::error
   add_watch_point(int wpoint) noexcept;
+  
+  template<typename Container>
+  void
+  add_watch_point(const Container& wpoints) noexcept {
+    for (int wpoint : wpoints) add_watch_point(wpoint);
+  }
+
   sys::error
   remove_watch_point(int wpoint) noexcept;
+
   sys::error
   register_callback(const pcnt_event_callbacks_t&, void* = nullptr) noexcept;
+  
+  template<typename Container>
+  sys::error
+  register_callback(const Container& wpoints,
+                    const pcnt_event_callbacks_t& cb,
+                    void* arg = nullptr) noexcept {
+    add_watch_point(wpoints);
+    return register_callback(cb, arg);
+  }
+
  private:
   pcnt_unit_handle_t unit_ = nullptr;
 };

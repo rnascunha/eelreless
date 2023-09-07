@@ -15,6 +15,10 @@
 #include <type_traits>
 #include <string_view>
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+
 #include "esp_log.h"
 
 #include "sys/sys.hpp"
@@ -27,9 +31,12 @@
 
 #include "control_flow.hpp"
 
+#include "packets.hpp"
 #include "resources.cpp"
 
 #include "wifi_args.hpp"
+
+#include "info.hpp"
 
 #if CONFIG_ENABLE_MDNS
 #include "mdns.h"
@@ -46,10 +53,31 @@ void init_mdns() noexcept {
 }
 #endif
 
+#define STEP_100      0
 
 #define VALVE_GPIO      GPIO_NUM_21
 #define SENSOR_GPIO     GPIO_NUM_17
-#define K_SENSOR        450
+
+#if STEP_100 == 1
+# define K_SENSOR        438     // 100
+# define STEP            100
+#else
+# define K_SENSOR        44     // 10
+# define STEP            10
+#endif
+
+static bool count_volume(pcnt_unit_handle_t unit,
+                         const pcnt_watch_event_data_t *edata,
+                         void *user_ctx) {
+  BaseType_t high_task_wakeup;
+  control_valve& info = *(control_valve*)user_ctx;
+  // send event data to queue, from this interrupt callback
+  info.volume += info.control.step();
+  info.control.clear_count();
+  xQueueSendFromISR(info.queue, &(edata->watch_point_value), &high_task_wakeup);
+
+  return (high_task_wakeup == pdTRUE);
+}
 
 extern "C" void app_main() {
   /**
@@ -75,17 +103,20 @@ extern "C" void app_main() {
     return;
   }
 
-  control_flow control(VALVE_GPIO, SENSOR_GPIO, K_SENSOR);
+  control_valve info = {
+    .control = control_flow(VALVE_GPIO, SENSOR_GPIO, K_SENSOR, STEP),
+    .queue = xQueueCreate(10, sizeof(int))
+  };
 
   /**
    * Starting WiFi/Websocket server
    */
   wifi::station::simple_wifi_retry wifi{};
-  http::server_connect_cb([&control](auto& server) {
+  http::server_connect_cb([&info](auto& server) {
     server.register_uri(
       websocket::uri<ws_cb>{
         .uri            = "/ws",
-        .user_ctx       = &control,
+        .user_ctx       = &info,
         .control_frames = false,
         .supported_subprotocol = nullptr
       }(),
@@ -118,7 +149,27 @@ extern "C" void app_main() {
   init_mdns();
 #endif
 
+  pcnt_event_callbacks_t cbs = {
+    .on_reach = count_volume,
+  };
+
+  info.control.register_callback(std::initializer_list<int>{K_SENSOR}, cbs, &info);
+  info.control.enable();
+  info.control.clear_count();
+
+  int event_count = 0;
   while (true) {
-    sys::delay(sys::time::max);
+    if (xQueueReceive(info.queue,
+                      &event_count,
+                      info.freq == 0 ? sys::time::max : pdMS_TO_TICKS(info.freq * 1000))) {
+      if (info.limit != 0 && info.volume >= info.limit) {
+        info.control.close();
+        info.limit = 0;
+        info.freq = 0;
+        send_state(info);
+      }
+    }
+    if (info.freq > 0)
+      send_state(info);
   }
 }

@@ -19,6 +19,9 @@ class water_flow_sensor {
  public:
   water_flow_sensor(gpio_num_t pin, int k) noexcept;
 
+  sys::error enable() noexcept;
+  sys::error disable() noexcept;
+
   sys::error start() noexcept;
   sys::error stop() noexcept;
 
@@ -38,6 +41,15 @@ class water_flow_sensor {
   [[nodiscard]] Ktype
   volume(int count) {
     return static_cast<Ktype>(count) / k_;
+  }
+
+  template<typename Container>
+  sys::error
+  register_callback(const Container& wpoints,
+                    const pcnt_event_callbacks_t& cb,
+                    void* arg = nullptr) noexcept {
+    pc_.add_watch_point(wpoints);
+    return pc_.register_callback(cb, arg);
   }
 
   int k_ratio() const noexcept;

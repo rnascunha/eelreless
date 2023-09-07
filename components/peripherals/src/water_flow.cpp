@@ -10,6 +10,7 @@
  */
 #include "peripherals/water_flow.hpp"
 
+
 water_flow_sensor::water_flow_sensor(gpio_num_t pin, int k) noexcept
   : pc_({
     .low_limit = -1,
@@ -25,8 +26,15 @@ water_flow_sensor::water_flow_sensor(gpio_num_t pin, int k) noexcept
   }), 
   k_(k) {
   channel_.edge_action(PCNT_CHANNEL_EDGE_ACTION_INCREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
-  pc_.enable();
-  pc_.clear();
+}
+
+sys::error
+water_flow_sensor::enable() noexcept {
+  return pc_.enable();
+}
+sys::error
+water_flow_sensor::disable() noexcept {
+  return pc_.disable();
 }
 
 sys::error

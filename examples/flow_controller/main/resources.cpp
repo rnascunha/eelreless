@@ -8,17 +8,18 @@
  * @copyright Copyright (c) 2023
  * 
  */
-
 #include <cstdint>
 
 #include "esp_log.h"
+#include "esp_http_server.h"
 
 #include "sys/error.hpp"
 #include "websocket/server.hpp"
 
 #include "version.hpp"
-#include "packtes.hpp"
-#include "control_flow.hpp"
+#include "packets.hpp"
+// #include "task.hpp"
+#include "info.hpp"
 
 static constexpr const char*
 TAG = "FLOW";
@@ -29,79 +30,22 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err) {
   return ESP_FAIL;
 }
 
-template<typename Packet>
-sys::error send_packet(websocket::request& req, const Packet& packet) noexcept {
-  websocket::frame pkt{};
-  pkt.payload = (std::uint8_t*)&packet;
-  pkt.len = sizeof(packet);
-  pkt.type = HTTPD_WS_TYPE_BINARY;
-
-  return req.send(pkt);
-}
-
-sys::error send_error(websocket::request& req, command cmd, error_description desc) noexcept {
-  return send_packet(req, error_response{command::error, cmd, desc});
-}
-
-sys::error send_state(websocket::request& req) noexcept {
-  control_flow& control = *((control_flow*)(req.native()->user_ctx));
-  auto count = control.count();
-  if (!count)
-    return send_error(req, command::state, error_description::error_reading);
-  return send_packet(req, state_response(command::state,
-                               control.is_open() ? state::open : state::close,
-                               *count,
-                               control.volume(*count)));
-}
-
-sys::error send_config(websocket::request& req) noexcept {
-  control_flow& control = *((control_flow*)(req.native()->user_ctx));
-
-  config_response cfg{command::config, version, control.k_ratio()};
-  return send_packet(req, cfg);
-}
-
-sys::error send_open_valve(websocket::request& req, const websocket::data& data) noexcept {
-  if (data.packet.len != sizeof(open_valve_request)) {
-    send_error(req, command::open_valve, error_description::size_packet_not_match);
-    return ESP_ERR_INVALID_SIZE;
-  }
-
-  control_flow& control = *((control_flow*)(req.native()->user_ctx));
-  const open_valve_request& r = *((open_valve_request*)data.packet.payload);
-  
-  if (r.clear_count)
-    control.clear_count();
-  control.open();
-
-  return send_state(req);
-}
-
-sys::error send_close_valve(websocket::request& req, const websocket::data& data) noexcept {
-  if (data.packet.len != sizeof(open_valve_request)) {
-    send_error(req, command::close_valve, error_description::size_packet_not_match);
-    return ESP_ERR_INVALID_SIZE;
-  }
-
-  control_flow& control = *((control_flow*)(req.native()->user_ctx));
-  const close_valve_request& r = *((close_valve_request*)data.packet.payload);
-  
-  if (r.clear_count)
-    control.clear_count();
-  control.close();
-
-  return send_state(req);
-}
-
 struct ws_cb {
   static sys::error on_open (websocket::request req) {
     ESP_LOGI(TAG, "Handshake done, the new connection was opened %d", req.socket());
 
-    return send_config(req);
+    send_config(req);
+    send_state(req);
+    return sys::error{};
   }
 
-  static void on_close (int sock, void*) {
+  static void on_close (int sock, void* data) {
     ESP_LOGI(TAG, "Disconnected %d", sock);
+    control_valve& info = *((control_valve*)data);
+    if (sock == info.client.fd) {
+      info.client.clear();
+      info.freq = 0;
+    }
   }
 
   static sys::error on_data(websocket::request req) {
@@ -123,9 +67,11 @@ struct ws_cb {
         send_state(req);
         break;
       case command::open_valve:
+        ESP_LOGI(TAG, "Open valve packet request");
         send_open_valve(req, data);
         break;
       case command::close_valve:
+        ESP_LOGI(TAG, "Close valve packet request");
         send_close_valve(req, data);
         break;
       default:
@@ -133,7 +79,6 @@ struct ws_cb {
         send_error(req, cmd, error_description::command_not_found);
         break;
     }
-
     return ESP_OK;
   }
 };
