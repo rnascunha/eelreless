@@ -39,6 +39,9 @@ to_ticks(ticks duration) noexcept {
   return duration;
 }
 
+[[nodiscard]] std::chrono::microseconds
+uptime() noexcept;
+
 template<typename T>
 concept tick_time = is_duration_v<T> || std::is_same_v<T, sys::time::ticks>;
 

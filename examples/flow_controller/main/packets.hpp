@@ -40,6 +40,7 @@ enum class error_description : std::uint8_t {
   error_reading,
   command_not_found,
   already_opened,
+  safe_timer_idle,
 };
 
 enum class state : std::uint8_t {
@@ -84,14 +85,18 @@ struct close_valve_request {
 
 #undef ATTR_PACKED
 
-sys::error send_error(websocket::request& req, command cmd,
-                      error_description desc) noexcept;
-sys::error send_state(websocket::request& req) noexcept;
+sys::error send_error(websocket::request&,
+                      command,
+                      error_description) noexcept;
+sys::error send_error(websocket::client&,
+                      command,
+                      error_description) noexcept;
+sys::error send_state(websocket::request&) noexcept;
 sys::error send_state(control_valve&) noexcept;
-sys::error send_config(websocket::request& req) noexcept;
-sys::error send_open_valve(websocket::request& req,
-                           const websocket::data& data) noexcept;
-sys::error send_close_valve(websocket::request& req,
-                            const websocket::data& data) noexcept;
+sys::error send_config(websocket::request&) noexcept;
+sys::error send_open_valve(websocket::request&,
+                           const websocket::data&) noexcept;
+sys::error send_close_valve(websocket::request&,
+                            const websocket::data&) noexcept;
 
 #endif  // MAIN_PACKETS_HPP_

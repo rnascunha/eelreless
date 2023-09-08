@@ -1,4 +1,4 @@
-menu "Example Configuration"
+menu "Control Flow Parameters"
   config ESP_WIFI_SSID
     string "WiFi SSID"
     default "myssid"
@@ -76,5 +76,44 @@ menu "Example Configuration"
     depends on ENABLE_MDNS
     help
       Name that the device will be reachable locally (<name>.local)
+
+  config VALVE_GPIO
+    int "GPIO connected to valve"
+    default 21
+    help
+      GPIO port connected to the on/off valve
+
+  config SENSOR_GPIO
+    int "GPIO connect to sensor data"
+    default 17
+    help
+      GPIO port connected to the sensor data line
+
+  config FLOW_CONTROL_PULSE_COUNT
+    int "Pulses to count 'steps' volume unit"
+    default 438
+    help
+      The number of pulses necessary to increase 'steps' volumes
+
+  config FLOW_CONTROL_STEP
+    int "Steps increase per pulse count"
+    default 100
+    help
+      The number of volume units to increase at each 'pulse count'
+
+  config ENABLE_SAFE_TIMER_IDLE
+    bool "Enable timer idle timer"
+    default y
+    help
+      This will enable a timer that will close the valve if no fluid 
+      is detected at the sensor at X seconds
+
+  config SAFE_TIMER_IDLE_MILISECONDS
+    int "Mili seconds to wait to close valve"
+    default 5000
+    depends on ENABLE_SAFE_TIMER_IDLE
+    help
+      Time to wait to check if any fluid pass the valve and close it
+      if necessary
 
 endmenu

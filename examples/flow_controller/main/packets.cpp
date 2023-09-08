@@ -12,16 +12,16 @@
 
 #include "packets.hpp"
 
+#include "sys/task.hpp"
 #include "sys/error.hpp"
 #include "websocket/server.hpp"
 
 #include "control_flow.hpp"
 #include "info.hpp"
 
-static constexpr const int dummy = 0;
-
 template<typename Packet>
-sys::error send_packet(websocket::request& req, const Packet& packet) noexcept {
+sys::error send_packet(websocket::request& req,
+                       const Packet& packet) noexcept {
   websocket::frame pkt{};
   
   pkt.payload = (std::uint8_t*)&packet;
@@ -47,16 +47,19 @@ sys::error send_error(websocket::request& req, command cmd, error_description de
 }
 
 sys::error send_error(websocket::client& client, command cmd, error_description desc) noexcept {
+  if (!client.is_valid()) return sys::error{};
   return send_packet(client, error_response{command::error, cmd, desc});
 }
 
 sys::error send_state(websocket::request& req) noexcept {
   control_valve& info = *((control_valve*)(req.native()->user_ctx));
+
   auto count = info.control.count();
   if (!count) {
     ESP_LOGW("PACKET", "State packet error reading");
-    return send_error(req, command::state, error_description::error_reading);
+    return send_error(info.client, command::state, error_description::error_reading);
   }
+
   return send_packet(req, state_response(command::state,
                                info.control.is_open() ? state::open : state::close,
                                *count,
@@ -103,19 +106,8 @@ send_open_valve(websocket::request& req,
   control_valve& info = *((control_valve*)(req.native()->user_ctx));
   const open_valve_request& r = *((open_valve_request*)data.packet.payload);
   
-  if (r.clear_count && !info.control.is_open()) {
-    info.control.clear_count();
-    info.volume = 0;
-  }
-
-  info.freq = r.freq;
-  if (r.freq > 0)
-    info.client = websocket::client(req);
-
-  info.limit = r.limit;
-  info.control.open();
-
-  xQueueSend(info.queue, &dummy, 0);
+  info.start(req, r.freq, r.limit, r.clear_count);
+  sys::notify(info.task);
   
   return sys::error{}; // send_state(req);
 }
@@ -132,16 +124,7 @@ send_close_valve(websocket::request& req,
   control_valve& info = *((control_valve*)(req.native()->user_ctx));
   const close_valve_request& r = *((close_valve_request*)data.packet.payload);
   
-  if (r.clear_count) {
-    info.control.clear_count();
-    info.volume = 0;
-    info.limit = 0;
-  }
-
-  info.freq = 0;
-  info.client.clear();
-
-  info.control.close();
+  info.close(r.clear_count);
 
   return send_state(req);
 }

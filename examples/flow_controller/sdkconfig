@@ -355,7 +355,7 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
-# Example Configuration
+# Control Flow Parameters
 #
 CONFIG_ESP_WIFI_SSID="xuxu_beleza_2_4G"
 CONFIG_ESP_WIFI_PASSWORD="cunha321"
@@ -374,7 +374,12 @@ CONFIG_ESP_WIFI_AUTH_WPA2_PSK=y
 # CONFIG_ESP_WIFI_AUTH_WAPI_PSK is not set
 CONFIG_ENABLE_MDNS=y
 CONFIG_MDNS_HOSTNAME="flow_control"
-# end of Example Configuration
+CONFIG_VALVE_GPIO=21
+CONFIG_SENSOR_GPIO=17
+CONFIG_FLOW_CONTROL_PULSE_COUNT=438
+CONFIG_FLOW_CONTROL_STEP=100
+# CONFIG_ENABLE_SAFE_TIMER_IDLE is not set
+# end of Control Flow Parameters
 
 #
 # Compiler options
