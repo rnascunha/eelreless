@@ -13,21 +13,24 @@
 
 #include "esp_timer.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+// #include "freertos/FreeRTOS.h"
+// #include "freertos/task.h"
+#include "sys/task.hpp"
 
 #include "control_flow.hpp"
 #include "websocket/server.hpp"
 
 struct control_valve {
+  static constexpr sys::event_group::bits bit_step = BIT0;
+  static constexpr sys::event_group::bits bit_timer = BIT1;
+
   control_flow        control;
-  TaskHandle_t        task;
 #if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
   esp_timer_handle_t  safe_timer;
-  bool                try_abort = false;
   int                 last_volume = 0;
   int                 last_count = 0;
 #endif  // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
+  sys::event_group    events{};
   websocket::client   client{};
   int freq            = 0;      // milieconds
   int volume          = 0;      // volume_ml

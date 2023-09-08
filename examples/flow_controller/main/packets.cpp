@@ -107,9 +107,9 @@ send_open_valve(websocket::request& req,
   const open_valve_request& r = *((open_valve_request*)data.packet.payload);
   
   info.start(req, r.freq, r.limit, r.clear_count);
-  sys::notify(info.task);
+  info.events.set(control_valve::bit_step);
   
-  return sys::error{}; // send_state(req);
+  return send_state(req);
 }
 
 sys::error

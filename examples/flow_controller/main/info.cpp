@@ -28,9 +28,7 @@ control_valve::control_valve(gpio_num_t valve_port,
                             gpio_num_t sensor_port,
                             int k_sensor,
                             int step) noexcept 
-  : control(valve_port, sensor_port, k_sensor, step),
-    task(xTaskGetCurrentTaskHandle()) {
-
+  : control(valve_port, sensor_port, k_sensor, step) {
   pcnt_event_callbacks_t cbs = {
     .on_reach = count_volume_cb,
   };
@@ -104,24 +102,23 @@ bool control_valve::check_update_timer_args() noexcept {
 #endif  // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
 
 void control_valve::check() noexcept {
-  if (sys::notify_wait(freq == 0 ? 
-                       sys::time::max :
-                       sys::time::to_ticks(std::chrono::milliseconds(freq)))) {
-#if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
-    if (try_abort && check_update_timer_args()) {
-      try_abort = false;
-      close();
+  auto b = events.wait(bit_step | bit_timer,
+    freq == 0 ? sys::time::max : sys::time::to_ticks(std::chrono::milliseconds(freq)));
+
+  if ((b & bit_step) != 0 && limit != 0 && volume >= limit) {
+    close();
+    send_state(*this);
+    return;
+  } else
+#if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1  
+  if ((b & bit_timer) && check_update_timer_args()) {
+        close();
       send_state(*this);
       send_error(client, command::state, error_description::safe_timer_idle);
       return;
-    } else
-#endif // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
-    if (limit != 0 && volume >= limit) {
-      close();
-      send_state(*this);
-      return;
-    }
-  } else if (freq > 0)
+  } else
+#endif  // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1  
+  if (freq > 0)
     send_state(*this);
 #if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
   check_update_timer_args();
@@ -142,7 +139,7 @@ count_volume_cb(pcnt_unit_handle_t unit,
   info.volume += info.control.step();
   info.control.clear_count();
 
-  sys::notify_from_ISR(info.task, &high_task_wakeup);
+  info.events.set_from_ISR(control_valve::bit_step, &high_task_wakeup);
 
   return (high_task_wakeup == pdTRUE);
 }
@@ -150,7 +147,6 @@ count_volume_cb(pcnt_unit_handle_t unit,
 #if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
 static void safe_timer_cb(void* arg) noexcept {
   control_valve& info = *((control_valve*)(arg));
-  info.try_abort = true;
-  sys::notify_from_ISR(info.task);
+  info.events.set_from_ISR(control_valve::bit_timer);
 }
 #endif  // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
