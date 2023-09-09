@@ -90,4 +90,9 @@ BaseType_t event_group::clear_from_ISR(const bits bits_to_clear) noexcept {
   return xEventGroupClearBitsFromISR(handler_, bits_to_clear);
 }
 
+bool
+event_group::is_set(const bits checked, const bits check) noexcept {
+  return (checked & check) != 0;
+}
+
 }  // namespace sys

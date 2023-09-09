@@ -58,14 +58,12 @@ struct config_response {
   command               cmd;
   firmware_version_type version;
   std::int32_t          k_converter;
-  std::int32_t          step;
 } ATTR_PACKED;
 
 struct state_response {
   command        cmd;
   state          st;
   std::int32_t   count;
-  std::int32_t   volume;
   std::int32_t   limit;
   std::int32_t   freq;
 } ATTR_PACKED;
@@ -80,7 +78,6 @@ struct open_valve_request {
 
 struct close_valve_request {
   command       cmd;
-  bool          clear_count;
 } ATTR_PACKED;
 
 #undef ATTR_PACKED
@@ -96,7 +93,6 @@ sys::error send_state(control_valve&) noexcept;
 sys::error send_config(websocket::request&) noexcept;
 sys::error send_open_valve(websocket::request&,
                            const websocket::data&) noexcept;
-sys::error send_close_valve(websocket::request&,
-                            const websocket::data&) noexcept;
+sys::error send_close_valve(websocket::request&) noexcept;
 
 #endif  // MAIN_PACKETS_HPP_

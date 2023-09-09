@@ -24,8 +24,10 @@ namespace uc {
 
 class pulse_counter {
  public:
-  static constexpr const int low_limit = -32768;    // -0x7fff - 1
+  static constexpr const int low_limit = -32768;      // -0x7fff - 1
   static constexpr const int high_limit = 32767;      // 0x7fff
+  static constexpr const int low_limit_accum = -32768;    // -0x7fff - 1
+  static constexpr const int high_limit_accum = 32767;      // 0x7fff
   
   static constexpr const int unused = GPIO_NUM_NC;
 

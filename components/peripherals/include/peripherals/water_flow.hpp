@@ -52,6 +52,9 @@ class water_flow_sensor {
     return pc_.register_callback(cb, arg);
   }
 
+  sys::error
+  remove_callback(int wpoint) noexcept;
+
   int k_ratio() const noexcept;
 
  private:

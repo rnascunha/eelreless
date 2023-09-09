@@ -45,7 +45,6 @@ void init_mdns() noexcept {
 #define SENSOR_GPIO     ((gpio_num_t)CONFIG_SENSOR_GPIO)
 
 # define K_SENSOR       CONFIG_FLOW_CONTROL_PULSE_COUNT
-# define STEP           CONFIG_FLOW_CONTROL_STEP
 
 extern "C" void app_main() {
   /**
@@ -73,8 +72,7 @@ extern "C" void app_main() {
 
   control_valve info(VALVE_GPIO,
                      SENSOR_GPIO,
-                     K_SENSOR,
-                     STEP);
+                     K_SENSOR);
 
   /**
    * Starting WiFi/Websocket server

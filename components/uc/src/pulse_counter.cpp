@@ -1,3 +1,13 @@
+/**
+ * @file pulse_counter.cpp
+ * @author Rafael Cunha (rnascunha@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-09-08
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include <cassert>
 #include <optional>
 

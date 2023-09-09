@@ -71,7 +71,7 @@ struct ws_cb {
         break;
       case command::close_valve:
         ESP_LOGI(TAG, "Close valve packet request");
-        send_close_valve(req, data);
+        send_close_valve(req);
         break;
       default:
         ESP_LOGI(TAG, "Packet %u request", (std::uint8_t)cmd);

@@ -3,11 +3,10 @@
 #include "control_flow.hpp"
 
 control_flow::control_flow(gpio_num_t valve_port,
-                           gpio_num_t sensor_port, int k_sensor,
-                           int step) noexcept
+                           gpio_num_t sensor_port,
+                           int k_sensor) noexcept
  : valve_(valve_port, GPIO_MODE_INPUT_OUTPUT),
-   sensor_(sensor_port, k_sensor),
-   step_(step) {}
+   sensor_(sensor_port, k_sensor) {}
   
 bool control_flow::is_open() noexcept {
   return valve_.read() != 0;
@@ -40,20 +39,11 @@ std::optional<int> control_flow::count() noexcept {
   return sensor_.count();
 }
 
-std::optional<double>
-control_flow::volume() noexcept {
-  return sensor_.volume<double>();
-}
-
-double
-control_flow::volume(int count) noexcept {
-  return sensor_.volume<double>(count);
-}
-
 int control_flow::k_ratio() const noexcept {
   return sensor_.k_ratio();
 }
 
-int control_flow::step() const noexcept {
-  return step_;
+sys::error
+control_flow::remove_callback(int wpoint) noexcept {
+  return sensor_.remove_callback(wpoint);
 }

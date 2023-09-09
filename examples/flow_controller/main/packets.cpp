@@ -62,8 +62,7 @@ sys::error send_state(websocket::request& req) noexcept {
 
   return send_packet(req, state_response(command::state,
                                info.control.is_open() ? state::open : state::close,
-                               *count,
-                               info.volume,
+                               *count + info.pulses,
                                info.limit,
                                info.freq));
 }
@@ -78,8 +77,7 @@ sys::error send_state(control_valve& info) noexcept {
   }
   return send_packet(info.client, state_response(command::state,
                                info.control.is_open() ? state::open : state::close,
-                               *count,
-                               info.volume,
+                               *count + info.pulses,
                                info.limit,
                                info.freq));
 }
@@ -89,8 +87,7 @@ sys::error send_config(websocket::request& req) noexcept {
 
   config_response cfg{command::config,
                       version,
-                      info.control.k_ratio(),
-                      info.control.step()};
+                      info.control.k_ratio()};
   return send_packet(req, cfg);
 }
 
@@ -107,24 +104,14 @@ send_open_valve(websocket::request& req,
   const open_valve_request& r = *((open_valve_request*)data.packet.payload);
   
   info.start(req, r.freq, r.limit, r.clear_count);
-  info.events.set(control_valve::bit_step);
+  info.events.set(control_valve::bit_init);
   
   return send_state(req);
 }
 
 sys::error
-send_close_valve(websocket::request& req,
-                 const websocket::data& data) noexcept {
-  if (data.packet.len != sizeof(close_valve_request)) {
-    ESP_LOGW("PACKET", "Close packet size error [%d/%u]", data.packet.len, sizeof(close_valve_request));
-    send_error(req, command::close_valve, error_description::size_packet_not_match);
-    return ESP_ERR_INVALID_SIZE;
-  }
-
+send_close_valve(websocket::request& req) noexcept {
   control_valve& info = *((control_valve*)(req.native()->user_ctx));
-  const close_valve_request& r = *((close_valve_request*)data.packet.payload);
-  
-  info.close(r.clear_count);
-
+  info.close();
   return send_state(req);
 }

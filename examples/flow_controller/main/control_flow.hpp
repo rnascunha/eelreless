@@ -23,8 +23,7 @@ class control_flow {
  public:
   control_flow(gpio_num_t valve_port,
                gpio_num_t sensor_port,
-               int k_sensor,
-               int step) noexcept;
+               int k_sensor) noexcept;
   
   sys::error enable() noexcept;
   sys::error disable() noexcept;
@@ -36,8 +35,6 @@ class control_flow {
 
   sys::error clear_count() noexcept;
   std::optional<int> count() noexcept;
-  std::optional<double> volume() noexcept;
-  double volume(int count) noexcept;
 
   template<typename Container>
   sys::error
@@ -47,15 +44,15 @@ class control_flow {
     return sensor_.register_callback(wpoints, cb, arg);
   }
 
+  sys::error
+  remove_callback(int wpoint) noexcept;
+
   [[nodiscard]] int
   k_ratio() const noexcept;
-  [[nodiscard]] int
-  step() const noexcept;
 
  private:
   uc::gpio valve_;
   water_flow_sensor sensor_;
-  int step_;
 };
 
 #endif  // MAIN_CONTROL_FLOW_HPP_

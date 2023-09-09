@@ -16,7 +16,7 @@ water_flow_sensor::water_flow_sensor(gpio_num_t pin, int k) noexcept
     .low_limit = -1,
     .high_limit = uc::pulse_counter::high_limit,
     .flags = {
-      .accum_count = 0
+      .accum_count = 1
     }
   }), 
   channel_(pc_, {
@@ -25,6 +25,7 @@ water_flow_sensor::water_flow_sensor(gpio_num_t pin, int k) noexcept
     .flags = {}
   }), 
   k_(k) {
+  pc_.add_watch_point(uc::pulse_counter::high_limit);
   channel_.edge_action(PCNT_CHANNEL_EDGE_ACTION_INCREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
 }
 
@@ -59,4 +60,9 @@ sys::error water_flow_sensor::clear() noexcept {
 int
 water_flow_sensor::k_ratio() const noexcept {
   return k_;
+}
+
+sys::error
+water_flow_sensor::remove_callback(int wpoint) noexcept {
+  return pc_.remove_watch_point(wpoint);
 }

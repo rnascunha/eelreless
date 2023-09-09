@@ -78,11 +78,16 @@ class event_group {
   BaseType_t set_from_ISR(const bits,
                     BaseType_t *pxHigherPriorityTaskWoken = nullptr) noexcept;
 
-  bits get() noexcept;
-  bits get_from_ISR() noexcept;
+  [[nodiscard]] bits
+  get() noexcept;
+  [[nodiscard]] bits
+  get_from_ISR() noexcept;
 
   bits clear(const bits) noexcept;
   BaseType_t clear_from_ISR(const bits) noexcept;
+
+  [[nodiscard]] static bool
+  is_set(const bits, const bits) noexcept;
 
  private:
   handle handler_;

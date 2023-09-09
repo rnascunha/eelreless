@@ -91,15 +91,9 @@ menu "Control Flow Parameters"
 
   config FLOW_CONTROL_PULSE_COUNT
     int "Pulses to count 'steps' volume unit"
-    default 438
+    default 450
     help
-      The number of pulses necessary to increase 'steps' volumes
-
-  config FLOW_CONTROL_STEP
-    int "Steps increase per pulse count"
-    default 100
-    help
-      The number of volume units to increase at each 'pulse count'
+      The number of pulses necessary to make 1L
 
   config ENABLE_SAFE_TIMER_IDLE
     bool "Enable timer idle timer"
