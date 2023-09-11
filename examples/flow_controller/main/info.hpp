@@ -16,8 +16,10 @@
 #include "sys/timer.hpp"
 #include "sys/task.hpp"
 
-#include "control_flow.hpp"
+#include "http/server.hpp"
 #include "websocket/server.hpp"
+
+#include "control_flow.hpp"
 
 struct control_valve {
   static constexpr sys::event_group::bits bit_init = BIT0;
@@ -31,8 +33,8 @@ struct control_valve {
   int                 last_pulses = 0;
   int                 last_count = 0;
 #endif  // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
+  http::server*       server = nullptr;
   sys::event_group    events{};
-  websocket::client   client{};
   int freq            = 0;      // milieconds
   int pulses          = 0;      // hold pulses when stop/start
   int limit           = 0;      // mililiters
@@ -42,12 +44,14 @@ struct control_valve {
                 int k_sensor,
                 const char* nvs_namespace) noexcept;
 
-  void start(websocket::request&, int freq, int limit, bool clear) noexcept;
+  void start(websocket::request&,
+             int freq, int limit, bool clear) noexcept;
   void close() noexcept;
 
   void check() noexcept;
 
-  sys::error k_ratio(int k) noexcept; 
+  sys::error k_ratio(int k) noexcept;
+  int k_ratio() const noexcept; 
 
 #if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
   bool check_update_timer_args() noexcept;

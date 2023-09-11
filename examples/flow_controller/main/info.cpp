@@ -11,6 +11,8 @@
 #include "sys/task.hpp"
 #include "sys/nvs.hpp"
 
+#include "http/server.hpp"
+
 #include "info.hpp"
 #include "packets.hpp"
 
@@ -56,7 +58,6 @@ void control_valve::start(websocket::request& req,
   } else pulses += *control.count();
 
   this->freq = freq;
-  client = websocket::client(req);
 
   if (control.is_open()) {
     control.close();
@@ -136,10 +137,16 @@ void control_valve::check() noexcept {
 #endif  // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
 }
 
-sys::error control_valve::k_ratio(int k) noexcept {
+sys::error
+control_valve::k_ratio(int k) noexcept {
   auto res = storage.set("k", k);
   control.k_ratio(k);
   return res;
+}
+
+int
+control_valve::k_ratio() const noexcept {
+  return control.k_ratio();
 }
 
 /**

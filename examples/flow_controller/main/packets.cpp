@@ -20,8 +20,9 @@
 #include "info.hpp"
 
 template<typename Packet>
-sys::error send_packet(websocket::request& req,
-                       const Packet& packet) noexcept {
+sys::error
+send_packet(websocket::request& req,
+            const Packet& packet) noexcept {
   websocket::frame pkt{};
   
   pkt.payload = (std::uint8_t*)&packet;
@@ -32,7 +33,9 @@ sys::error send_packet(websocket::request& req,
 }
 
 template<typename Packet>
-sys::error send_packet(websocket::client& client, const Packet& packet) noexcept {
+sys::error
+send_packet(websocket::client& client,
+            const Packet& packet) noexcept {
   websocket::frame pkt{};
   
   pkt.payload = (std::uint8_t*)&packet;
@@ -42,14 +45,43 @@ sys::error send_packet(websocket::client& client, const Packet& packet) noexcept
   return client.send(pkt);
 }
 
-sys::error send_error(websocket::request& req, command cmd, error_description desc) noexcept {
+template<typename Packet>
+sys::error
+send_packet_all(control_valve& info,
+                const Packet& packet) noexcept {
+  http::server& server = *info.server;
+  
+  std::size_t size = 7;
+  int clients[7];
+  auto err = server.client_list(size, clients);
+  if (err) return err;
+  if (size == 0) {
+    info.freq = 0;
+    return err;
+  }
+  
+  websocket::frame pkt{};
+  
+  pkt.payload = (std::uint8_t*)&packet;
+  pkt.len = sizeof(packet);
+  pkt.type = HTTPD_WS_TYPE_BINARY;
+
+  for (int i = 0; i < size; ++i)
+    websocket::client(server.native(), clients[i]).send(pkt);
+
+  return err;
+};
+
+sys::error send_error(websocket::request& req,
+                      command cmd,
+                      error_description desc) noexcept {
   return send_packet(req, error_response{command::error, cmd, desc});
 }
 
-sys::error send_error(websocket::client& client, command cmd, error_description desc) noexcept {
-  if (!client.is_valid()) return sys::error{};
-  return send_packet(client, error_response{command::error, cmd, desc});
-}
+// sys::error send_error(websocket::client& client, command cmd, error_description desc) noexcept {
+//   if (!client.is_valid()) return sys::error{};
+//   return send_packet(client, error_response{command::error, cmd, desc});
+// }
 
 sys::error send_state(websocket::request& req) noexcept {
   control_valve& info = *((control_valve*)(req.native()->user_ctx));
@@ -57,7 +89,7 @@ sys::error send_state(websocket::request& req) noexcept {
   auto count = info.control.count();
   if (!count) {
     ESP_LOGW("PACKET", "State packet error reading");
-    return send_error(info.client, command::state, error_description::error_reading);
+    return sys::error{};
   }
 
   return send_packet(req, state_response(command::state,
@@ -68,18 +100,17 @@ sys::error send_state(websocket::request& req) noexcept {
 }
 
 sys::error send_state(control_valve& info) noexcept {
-  if (!info.client.is_valid()) return sys::error{};
-
   auto count = info.control.count();
   if (!count) {
     ESP_LOGW("PACKET", "State packet error reading");
-    return send_error(info.client, command::state, error_description::error_reading);
+    return sys::error{};
   }
-  return send_packet(info.client, state_response(command::state,
-                               info.control.is_open() ? state::open : state::close,
-                               *count + info.pulses,
-                               info.limit,
-                               info.freq));
+
+  return send_packet_all(info, state_response(command::state,
+                                      info.control.is_open() ? state::open : state::close,
+                                      *count + info.pulses,
+                                      info.limit,
+                                      info.freq));
 }
 
 sys::error send_config(websocket::request& req) noexcept {
@@ -101,8 +132,13 @@ sys::error send_config(websocket::request& req,
   control_valve& info = *((control_valve*)(req.native()->user_ctx));
   const config_request& r = *((config_request*)data.packet.payload);
 
-  if (r.k_converter > 0)
+  if (r.k_converter > 0 && info.k_ratio() != r.k_converter) {
     info.k_ratio(r.k_converter);
+    return send_packet_all(info,
+                           config_response{command::config,
+                                           version,
+                                           info.k_ratio()});
+  }
 
   return send_config(req);
 }
@@ -122,12 +158,12 @@ send_open_valve(websocket::request& req,
   info.start(req, r.freq, r.limit, r.clear_count);
   info.events.set(control_valve::bit_init);
   
-  return send_state(req);
+  return send_state(info);
 }
 
 sys::error
 send_close_valve(websocket::request& req) noexcept {
   control_valve& info = *((control_valve*)(req.native()->user_ctx));
   info.close();
-  return send_state(req);
+  return send_state(info);
 }

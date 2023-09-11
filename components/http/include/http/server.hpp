@@ -196,6 +196,9 @@ class server {
   [[nodiscard]] static handler
   initiate(const config&) noexcept;
 
+  sys::error
+  client_list(std::size_t& size, int*) noexcept;
+
 #if CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
   [[nodiscard]] static handler
   initiate(ssl_config&) noexcept;

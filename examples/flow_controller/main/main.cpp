@@ -81,7 +81,7 @@ extern "C" void app_main() {
    * Starting WiFi/Websocket server
    */
   wifi::station::simple_wifi_retry wifi{};
-  http::server_connect_cb([&info](auto& server) {
+  http::server_connect_cb server([&info](auto& server) {
     server.register_uri(
       websocket::uri<ws_cb>{
         .uri            = "/ws",
@@ -95,6 +95,8 @@ extern "C" void app_main() {
       }
     );
   });
+
+  info.server = &server.svr;
 
   if (wifi::start()) {
     ESP_LOGE(TAG, "Error connecting to network");

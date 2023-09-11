@@ -108,6 +108,11 @@ server::initiate(ssl_config& cfg) noexcept {
 }
 #endif  // CONFIG_ESP_HTTPS_SERVER_ENABLE == 1
 
+sys::error
+server::client_list(std::size_t& size, int* clients) noexcept {
+  return httpd_get_client_list(handler_, &size, clients);
+}
+
 /**
  *
  */

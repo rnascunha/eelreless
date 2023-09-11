@@ -40,11 +40,6 @@ struct ws_cb {
 
   static void on_close (int sock, void* data) {
     ESP_LOGI(TAG, "Disconnected %d", sock);
-    control_valve& info = *((control_valve*)data);
-    if (sock == info.client.fd) {
-      info.client.clear();
-      info.freq = 0;
-    }
   }
 
   static sys::error on_data(websocket::request req) {
