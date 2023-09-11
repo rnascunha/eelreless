@@ -11,6 +11,8 @@
 #ifndef MAIN_INFO_HPP_
 #define MAIN_INFO_HPP_
 
+#include "sys/nvs.hpp"
+#include "sys/sys.hpp"
 #include "sys/timer.hpp"
 #include "sys/task.hpp"
 
@@ -23,6 +25,7 @@ struct control_valve {
   static constexpr sys::event_group::bits bit_timer = BIT2;
 
   control_flow        control;
+  sys::nvs            storage;
 #if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
   sys::timer          safe_timer;
   int                 last_pulses = 0;
@@ -36,12 +39,15 @@ struct control_valve {
 
   control_valve(gpio_num_t valve_port,
                 gpio_num_t sensor_port,
-                int k_sensor) noexcept;
+                int k_sensor,
+                const char* nvs_namespace) noexcept;
 
   void start(websocket::request&, int freq, int limit, bool clear) noexcept;
   void close() noexcept;
 
   void check() noexcept;
+
+  sys::error k_ratio(int k) noexcept; 
 
 #if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
   bool check_update_timer_args() noexcept;

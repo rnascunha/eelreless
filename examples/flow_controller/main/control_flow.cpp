@@ -1,3 +1,15 @@
+/**
+ * @file control_flow.cpp
+ * @author Rafael Cunha (rnascunha@gmail.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-09-11
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+#include <cassert>
+
 #include <optional>
 
 #include "control_flow.hpp"
@@ -41,6 +53,11 @@ std::optional<int> control_flow::count() noexcept {
 
 int control_flow::k_ratio() const noexcept {
   return sensor_.k_ratio();
+}
+
+void control_flow::k_ratio(int k) noexcept {
+  assert(k > 0 && "K value must be graeter than 0");
+  sensor_.k_ratio(k);
 }
 
 sys::error

@@ -31,6 +31,8 @@ class nvs {
 
   //Sets
   error
+  set(const char*, int) noexcept;
+  error
   set(const char*, std::int8_t) noexcept;
   error
   set(const char*, std::uint8_t) noexcept;

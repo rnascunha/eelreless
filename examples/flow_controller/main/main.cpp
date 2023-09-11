@@ -12,7 +12,7 @@
 
 #include "esp_log.h"
 
-#include "sys/sys.hpp"
+#include "sys/nvs.hpp"
 
 #include "wifi/common.hpp"
 #include "wifi/station.hpp"
@@ -46,6 +46,8 @@ void init_mdns() noexcept {
 
 # define K_SENSOR       CONFIG_FLOW_CONTROL_PULSE_COUNT
 
+#define STORAGE_NAMESPACE "control_flow"
+
 extern "C" void app_main() {
   /**
    * Initiate chip
@@ -72,7 +74,8 @@ extern "C" void app_main() {
 
   control_valve info(VALVE_GPIO,
                      SENSOR_GPIO,
-                     K_SENSOR);
+                     K_SENSOR,
+                     STORAGE_NAMESPACE);
 
   /**
    * Starting WiFi/Websocket server

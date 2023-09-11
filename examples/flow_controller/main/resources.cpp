@@ -59,7 +59,7 @@ struct ws_cb {
     switch(cmd) {
       case command::config:
         ESP_LOGI(TAG, "Config packet request");
-        send_config(req);
+        send_config(req, data);
         break;
       case command::state:
         ESP_LOGI(TAG, "State packet request");

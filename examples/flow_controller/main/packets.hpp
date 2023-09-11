@@ -68,9 +68,15 @@ struct state_response {
   std::int32_t   freq;
 } ATTR_PACKED;
 
+struct config_request {
+  command         cmd;
+  std::int32_t    k_converter;
+} ATTR_PACKED;
+
 struct open_valve_request {
   command       cmd;
-  bool          clear_count;
+  std::uint8_t  clear_count:1;
+  std::uint8_t  :7;
   std::int32_t  freq;   // 0
   std::int32_t  limit;  // 0
 } ATTR_PACKED;
@@ -91,6 +97,8 @@ sys::error send_error(websocket::client&,
 sys::error send_state(websocket::request&) noexcept;
 sys::error send_state(control_valve&) noexcept;
 sys::error send_config(websocket::request&) noexcept;
+sys::error send_config(websocket::request&,
+                       const websocket::data& data) noexcept;
 sys::error send_open_valve(websocket::request&,
                            const websocket::data&) noexcept;
 sys::error send_close_valve(websocket::request&) noexcept;

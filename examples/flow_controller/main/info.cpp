@@ -9,6 +9,7 @@
  * 
  */
 #include "sys/task.hpp"
+#include "sys/nvs.hpp"
 
 #include "info.hpp"
 #include "packets.hpp"
@@ -26,8 +27,10 @@ static void safe_timer_cb(void* arg) noexcept;
 
 control_valve::control_valve(gpio_num_t valve_port,
                             gpio_num_t sensor_port,
-                            int k_sensor) noexcept 
-  : control(valve_port, sensor_port, k_sensor) 
+                            int k_sensor,
+                            const char* nvs_namespace) noexcept 
+  : control(valve_port, sensor_port, k_sensor),
+    storage(nvs_namespace)
 #if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
     , safe_timer(esp_timer_create_args_t{
     .callback = safe_timer_cb,
@@ -37,7 +40,12 @@ control_valve::control_valve(gpio_num_t valve_port,
     .skip_unhandled_events = false
   })
 #endif  // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
-    {}
+    {
+  std::int32_t k;
+  auto ans = storage.get("k", k);
+  if (!ans)
+    control.k_ratio(k);
+}
 
 void control_valve::start(websocket::request& req,
                           int freq, int limit,
@@ -126,6 +134,12 @@ void control_valve::check() noexcept {
 #if CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
   check_update_timer_args();
 #endif  // CONFIG_ENABLE_SAFE_TIMER_IDLE == 1
+}
+
+sys::error control_valve::k_ratio(int k) noexcept {
+  auto res = storage.set("k", k);
+  control.k_ratio(k);
+  return res;
 }
 
 /**

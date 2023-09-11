@@ -84,11 +84,27 @@ sys::error send_state(control_valve& info) noexcept {
 
 sys::error send_config(websocket::request& req) noexcept {
   control_valve& info = *((control_valve*)(req.native()->user_ctx));
-
   config_response cfg{command::config,
                       version,
                       info.control.k_ratio()};
   return send_packet(req, cfg);
+}
+
+sys::error send_config(websocket::request& req,
+                       const websocket::data& data) noexcept {
+  if (data.packet.len != sizeof(config_request)) {
+    ESP_LOGW("PACKET", "Config packet size error [%d/%u]", data.packet.len, sizeof(config_request));
+    send_error(req, command::config, error_description::size_packet_not_match);
+    return ESP_ERR_INVALID_SIZE;
+  }
+
+  control_valve& info = *((control_valve*)(req.native()->user_ctx));
+  const config_request& r = *((config_request*)data.packet.payload);
+
+  if (r.k_converter > 0)
+    info.k_ratio(r.k_converter);
+
+  return send_config(req);
 }
 
 sys::error

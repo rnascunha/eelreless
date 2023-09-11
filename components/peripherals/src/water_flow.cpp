@@ -8,6 +8,8 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <cassert>
+
 #include "peripherals/water_flow.hpp"
 
 
@@ -60,6 +62,11 @@ sys::error water_flow_sensor::clear() noexcept {
 int
 water_flow_sensor::k_ratio() const noexcept {
   return k_;
+}
+
+void water_flow_sensor::k_ratio(int k) noexcept {
+  assert(k > 0 && "K value must be graeter than 0");
+  k_ = k;
 }
 
 sys::error

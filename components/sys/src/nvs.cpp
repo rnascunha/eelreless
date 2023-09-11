@@ -24,6 +24,11 @@ nvs::close() noexcept {
 
 //Sets
 error
+nvs::set(const char* key, int value) noexcept {
+  return nvs_set_i32(handler_, key, value);
+}
+
+error
 nvs::set(const char* key, std::int8_t value) noexcept {
   return nvs_set_i8(handler_, key, value);
 }

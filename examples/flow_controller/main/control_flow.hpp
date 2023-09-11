@@ -49,6 +49,7 @@ class control_flow {
 
   [[nodiscard]] int
   k_ratio() const noexcept;
+  void k_ratio(int) noexcept;
 
  private:
   uc::gpio valve_;

@@ -55,7 +55,9 @@ class water_flow_sensor {
   sys::error
   remove_callback(int wpoint) noexcept;
 
-  int k_ratio() const noexcept;
+  [[nodiscard]] int
+  k_ratio() const noexcept;
+  void k_ratio(int) noexcept;
 
  private:
   uc::pulse_counter pc_;
