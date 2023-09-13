@@ -1,3 +1,6 @@
 [submodule "components/fmt/fmt"]
 	path = components/fmt/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "esp-components"]
+	path = esp-components
+	url = https://github.com/rnascunha/esp-components.git

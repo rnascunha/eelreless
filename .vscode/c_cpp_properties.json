@@ -1,22 +1,39 @@
 {
-    "configurations": [
-        {
-            "name": "Linux",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/components/**",
-                "${workspaceFolder}/managed_components/**",
-                "/home/rnascunha/dev/toolchain/esp-idf/esp-idf/components/**"
-            ],
-            "defines": [],
-            "compilerPath": "/home/rnascunha/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-cc",
-            "cStandard": "c17",
-            "cppStandard": "c++20",
-            "intelliSenseMode": "${default}",
-            "forcedInclude": [
-                "${workspaceFolder}/build/config/sdkconfig.h"
-            ]
-        }
-    ],
-    "version": 4
+  "env": {
+      "IDF_PATH": "/home/rnascunha/dev/toolchain/esp-idf/esp-idf/",
+      "XTENSA_ESP32_PATH": "/home/rnascunha/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208"
+  },
+  "configurations": [
+      {
+          "name": "ESP32",
+          "includePath": [
+              "${workspaceFolder}/main/**",
+              "${workspaceFolder}/esp-components/components/**",
+              "${IDF_PATH}/components/**"
+          ],
+          "defines": [
+              "-DESP_PLATAFORM=1"
+          ],
+          "compilerPath": "${XTENSA_ESP32_PATH}/xtensa-esp32-elf/bin/xtensa-esp32-elf-cc",
+          "cStandard": "c23",
+          "cppStandard": "c++23",
+          "intelliSenseMode": "${default}",
+          "forcedInclude": [
+              "${workspaceFolder}/build/config/sdkconfig.h"
+          ],
+          "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+      },
+      {
+          "name": "Linux",
+          "includePath": [
+              "${workspaceFolder}/**"
+          ],
+          "defines": [],
+          "compilerPath": "/usr/bin/clang",
+          "cStandard": "c17",
+          "cppStandard": "c++14",
+          "intelliSenseMode": "linux-clang-x64"
+      }
+  ],
+  "version": 4
 }
